@@ -40,7 +40,6 @@ var TcpTransport = module.exports = function TcpTransport (options) {
 
     self.host = options.host || 'localhost';
     self.port = options.port || 6742;
-    self.localAddress = options.localAddress;
 
     self.server = null;
 };

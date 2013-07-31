@@ -55,6 +55,24 @@ tcpTransport.findNode(contact, 'Zm9v');
 
 ## Documentation
 
+### TcpTransport
+
+#### TcpTransport.listen(options, callback)
+
+  * `options`: See `new TcpTransport(options)` `options`
+  * `callback`: See `tcpTransport.listen(callback)` `callback`
+  * Return: _Object_ an instance of TcpTransport with server running
+
+Creates new TCP transport and starts the server.
+
+#### new TcpTransport(options)
+
+  * `options`:
+    * `host`: _String_ _(Default: 'localhost')_
+    * `port`: _Integer_ _(Default: 6742)_ A port value of zero will assign a random port
+
+Creates a new TCP transport.
+
 #### tcpTransport.close(callback)
 
   * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once the server is stopped
