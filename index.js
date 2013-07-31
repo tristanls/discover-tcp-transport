@@ -41,7 +41,26 @@ var TcpTransport = module.exports = function TcpTransport (options) {
 util.inherits(TcpTransport, events.EventEmitter);
 
 TcpTransport.prototype.findNode = function findNode (contact, nodeId) {
-
+    var self = this;
+    var client = net.connect({host: contact.ip, port: contact.port}, function () {
+        client.write(nodeId + '\r\n');
+    });
+    client.on('data', function (data) {
+        try {
+            data = JSON.parse(data.toString());
+            return self.emit('node', null, contact, nodeId, data);
+        } catch (exception) {
+            console.dir(exception);
+        }
+    });  
+    client.on('end', function () {
+        self.emit('reached', contact);
+    });
+    client.on('error', function (error) {
+        self.emit('node', new Error('unreachable'), contact, nodeId);
+        self.emit('unreachable', contact);
+        return;
+    });
 };
 
 TcpTransport.prototype.ping = function ping (contact) {

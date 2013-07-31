@@ -52,8 +52,9 @@ test['ping() connects to contact.ip:contact.port'] = function (test) {
 };
 
 test['ping() causes `reached` event to be emitted on successful connection'] = function (test) {
-    test.expect(3);
-    var testContact = {ip: '127.0.0.1', port: 11234};
+    test.expect(4);
+    var barBase64 = new Buffer("bar").toString("base64");
+    var testContact = {ip: '127.0.0.1', port: 11234, id: barBase64};
     var server = net.createServer(function (connection) {
         test.ok(true); // assert that connection happened
         connection.end();
@@ -61,6 +62,7 @@ test['ping() causes `reached` event to be emitted on successful connection'] = f
     server.listen(11234, function () {
         var tcpTransport = new TcpTransport();
         tcpTransport.on('reached', function (contact) {
+            test.equal(contact.id, barBase64);
             test.equal(contact.ip, testContact.ip);
             test.equal(contact.port, testContact.port);
             server.close(function () {
@@ -72,10 +74,12 @@ test['ping() causes `reached` event to be emitted on successful connection'] = f
 };
 
 test['ping() causes `unreachable` event to be emitted on failed connection'] = function (test) {
-    test.expect(2);
-    var testContact = {ip: '127.0.0.1', port: 11000};
+    test.expect(3);
+    var barBase64 = new Buffer("bar").toString("base64");
+    var testContact = {ip: '127.0.0.1', port: 11000, id: barBase64};
     var tcpTransport = new TcpTransport();
     tcpTransport.on('unreachable', function (contact) {
+        test.equal(contact.id, barBase64);
         test.equal(contact.ip, testContact.ip);
         test.equal(contact.port, testContact.port);
         test.done();

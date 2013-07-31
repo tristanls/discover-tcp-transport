@@ -54,15 +54,17 @@ tcpTransport.findNode(contact, 'some.node.id');
 #### tcpTransport.findNode(contact, nodeId)
 
   * `contact`: _Object_ The node to contact with request to find `nodeId`
+    * `id`: _String (base64)_ Base64 encoded contact node id
     * `ip`: _String_ IP address to connect to
     * `port`: _Integer_ port to connect to
-  * `nodeId`: _String_ The string representation of the node id to find
+  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find
 
 Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE request to the contact at `contact.ip` and `contact.port` using TCP. The transport will emit `node` event when a response is processed (or times out).
 
 #### tcpTransport.ping(contact)
 
   * `contact`: _Object_ contact to ping
+    * `id`: _String (base64)_ Base64 encoded contact node id
     * `ip`: _String_ IP address to connect to
     * `port`: _Integer_ port to connect to  
 
@@ -113,6 +115,7 @@ If `error` occurs, the transport encountered an error when issuing the `findNode
 #### Event: `reached`
 
   * `contact`: _Object_ The contact that was reached when pinged.
+    * `id`: _String (base64)_ Base64 encoded contact node id
     * `ip`: _String_ IP address of reached contact
     * `port`: _Integer_ port of reached contact
 
@@ -121,6 +124,7 @@ Emitted when a previously pinged `contact` is deemed reachable by the transport.
 #### Event: `unreachable`
 
   * `contact`: _Object_ The contact that was unreachable when pinged.
+    * `id`: _String (base64)_ Base64 encoded contact node id
     * `ip`: _String_ IP address of unreachable contact
     * `port`: _Integer_ port of unreachable contact
 
