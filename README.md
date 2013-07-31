@@ -44,12 +44,22 @@ tcpTransport.on('unreachable', function (contact) {
     // contact is unreachable 
 });
 
+tcpTransport.listen(function () {
+    console.log('transport listening...'); 
+});
+
 tcpTransport.ping(contact);
 
-tcpTransport.findNode(contact, 'some.node.id');
+tcpTransport.findNode(contact, 'Zm9v');
 ```
 
 ## Documentation
+
+#### tcpTransport.close(callback)
+
+  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once the server is stopped
+
+Stops the server from listening to requests from other nodes.
 
 #### tcpTransport.findNode(contact, nodeId)
 
@@ -60,6 +70,12 @@ tcpTransport.findNode(contact, 'some.node.id');
   * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find
 
 Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE request to the contact at `contact.ip` and `contact.port` using TCP. The transport will emit `node` event when a response is processed (or times out).
+
+#### tcpTransport.listen(callback)
+
+  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once the server is up
+
+Starts the server to listen to requests from other nodes.
 
 #### tcpTransport.ping(contact)
 
@@ -74,6 +90,8 @@ Issues a PING request to the `contact`. In other words, pings the contact at the
 
   * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find
   * `callback`: _Function_ The callback to call with the result of processing the FIND-NODE request
+    * `error`: _Error_ if any
+    * `response`: _Object_ or _Array_ The response to FIND-NODE request
 
 Emitted when another node issues a FIND-NODE request to this node.
 
@@ -129,3 +147,29 @@ Emitted when a previously pinged `contact` is deemed reachable by the transport.
     * `port`: _Integer_ port of unreachable contact
 
 Emitted when a previously pinged `contact` is deemed unreachable by the transport.
+
+## Wire Protocol
+
+Wire protocol for TCP transport is simple one-line \r\n terminated ASCII.
+
+### FIND-NODE
+
+    Zm9v\r\n
+
+FIND-NODE request consists of base64 encoded node id followed by \r\n.
+
+#### Object Response
+
+    {"id":"Zm9v","ip":"127.0.0.1","port":6742}\r\n
+
+An Object response is JSON representation of the contact followed by \r\n.
+
+#### Array Response
+
+    [{"id":"YmFy","ip":"192.168.0.1","port":6742},{"id":"YmF6","ip":"192.168.0.2","port":6742}]\r\n
+
+An Array response is JSON representation of an array of closest contacts followed by \r\n.
+
+### PING
+
+Ping tests connectivity only and transfers no data.

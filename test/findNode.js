@@ -183,6 +183,34 @@ test['findNode() emits `node` event with `unreachable` error on failed connectio
         fooBase64);
 };
 
+test['findNode() emits `node` event with `error` error on no-data connection'] = function (test) {
+    test.expect(7);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var server = net.createServer(function (connection) {
+        connection.on('data', function (data) {
+            connection.end(); // close without sending data
+        });
+    });
+    server.listen(11234, function () {
+        var tcpTransport = new TcpTransport();
+        tcpTransport.on('node', function (error, contact, nodeId, response) {
+            test.ok(!response);
+            test.equal(contact.id, barBase64);
+            test.equal(contact.ip, '127.0.0.1');
+            test.equal(contact.port, 11234);
+            test.equal(nodeId, fooBase64);
+            test.ok(error instanceof Error)
+            test.equal(error.message, 'error');
+            server.close(function () {
+                test.done();
+            });
+        });
+        tcpTransport.findNode({ip: '127.0.0.1', port: 11234, id: barBase64}, 
+            fooBase64);
+    });
+};
+
 test['findNode() emits `unreachable` event on failed connection'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
