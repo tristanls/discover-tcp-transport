@@ -30,4 +30,29 @@ OTHER DEALINGS IN THE SOFTWARE.
 */
 "use strict";
 
-// TODO: implement
+var events = require('events'),
+    net = require('net'),
+    util = require('util');
+
+var TcpTransport = module.exports = function TcpTransport (options) {
+
+};
+
+util.inherits(TcpTransport, events.EventEmitter);
+
+TcpTransport.prototype.findNode = function findNode (contact, nodeId) {
+
+};
+
+TcpTransport.prototype.ping = function ping (contact) {
+    var self = this;
+    var client = net.connect({host: contact.ip, port: contact.port}, function () {
+        client.end();
+    });
+    client.on('end', function () {
+        self.emit('reached', contact);
+    });
+    client.on('error', function () {
+        self.emit('unreachable', contact);
+    });
+};

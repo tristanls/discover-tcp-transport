@@ -23,7 +23,9 @@ _**WARNING**: Using TCP transport is meant primarily for development in a develo
 ## Usage
 
 ```javascript
-var tcpTransport = require('discover-tcp-transport');
+var TcpTransport = require('discover-tcp-transport');
+
+var tcpTransport = new TcpTransport();
 
 tcpTransport.on('findNode', function (nodeId, callback) {
     // process request
@@ -52,6 +54,8 @@ tcpTransport.findNode(contact, 'some.node.id');
 #### tcpTransport.findNode(contact, nodeId)
 
   * `contact`: _Object_ The node to contact with request to find `nodeId`
+    * `ip`: _String_ IP address to connect to
+    * `port`: _Integer_ port to connect to
   * `nodeId`: _String_ The string representation of the node id to find
 
 Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE request to the contact at `contact.ip` and `contact.port` using TCP. The transport will emit `node` event when a response is processed (or times out).
@@ -59,12 +63,14 @@ Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE req
 #### tcpTransport.ping(contact)
 
   * `contact`: _Object_ contact to ping
+    * `ip`: _String_ IP address to connect to
+    * `port`: _Integer_ port to connect to  
 
 Issues a PING request to the `contact`. In other words, pings the contact at the `contact.ip` and `contact.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
 
 #### Event: `findNode`
 
-  * `nodeId`: _String_ The string representation of the node id to find
+  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find
   * `callback`: _Function_ The callback to call with the result of processing the FIND-NODE request
 
 Emitted when another node issues a FIND-NODE request to this node.
@@ -107,11 +113,15 @@ If `error` occurs, the transport encountered an error when issuing the `findNode
 #### Event: `reached`
 
   * `contact`: _Object_ The contact that was reached when pinged.
+    * `ip`: _String_ IP address of reached contact
+    * `port`: _Integer_ port of reached contact
 
 Emitted when a previously pinged `contact` is deemed reachable by the transport.
 
 #### Event: `unreachable`
 
   * `contact`: _Object_ The contact that was unreachable when pinged.
+    * `ip`: _String_ IP address of unreachable contact
+    * `port`: _Integer_ port of unreachable contact
 
 Emitted when a previously pinged `contact` is deemed unreachable by the transport.
