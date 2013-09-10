@@ -73,6 +73,8 @@ TcpTransport.prototype.close = function close (callback) {
 TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
     var self = this;
     var client = net.connect({host: contact.host, port: contact.port}, function () {
+        sender.host = sender.host || self.host;
+        sender.port = sender.port || self.port;
         var request = {request: {findNode: nodeId}, sender: sender};
         client.write(JSON.stringify(request) + '\r\n');
     });

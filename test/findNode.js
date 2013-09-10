@@ -51,7 +51,8 @@ test['findNode() connects to contact.host:contact.port'] = function (test) {
         var tcpTransport = new TcpTransport();
         tcpTransport.findNode(
             {host: '127.0.0.1', port: 11234, id: new Buffer("bar").toString("base64")}, 
-            new Buffer("foo").toString("base64"));
+            new Buffer("foo").toString("base64"),
+            {id: new Buffer("foo").toString("base64")});
     });
 };
 
@@ -106,8 +107,10 @@ test['findNode() emits `node` event with a response Object if node is found'] = 
                 test.done();
             });
         });
-        tcpTransport.findNode({host: '127.0.0.1', port: 11234, id: barBase64}, 
-            fooBase64);
+        tcpTransport.findNode(
+            {host: '127.0.0.1', port: 11234, id: barBase64}, 
+            fooBase64,
+            {id: barBase64});
     });
 };
 
@@ -143,8 +146,10 @@ test['findNode() emits `node` event with response Array if node is not found'] =
                 test.done();
             });
         });
-        tcpTransport.findNode({host: '127.0.0.1', port: 11234, id: barBase64}, 
-            fooBase64);
+        tcpTransport.findNode(
+            {host: '127.0.0.1', port: 11234, id: barBase64}, 
+            fooBase64,
+            {id: barBase64});
     });
 };
 
@@ -165,8 +170,10 @@ test['findNode() emits `reached` event on successful connection'] = function (te
                 test.done();
             });
         });
-        tcpTransport.findNode({host: '127.0.0.1', port: 11234, id: barBase64},
-            fooBase64);
+        tcpTransport.findNode(
+            {host: '127.0.0.1', port: 11234, id: barBase64},
+            fooBase64,
+            {id: barBase64});
     });
 };
 
@@ -185,8 +192,10 @@ test['findNode() emits `node` event with `unreachable` error on failed connectio
         test.equal(error.message, 'unreachable');
         test.done();
     });
-    tcpTransport.findNode({host: '127.0.0.1', port: 11000, id: barBase64}, 
-        fooBase64);
+    tcpTransport.findNode(
+        {host: '127.0.0.1', port: 11000, id: barBase64}, 
+        fooBase64,
+        {id: barBase64});
 };
 
 test['findNode() emits `node` event with `error` error on no-data connection'] = function (test) {
@@ -212,8 +221,10 @@ test['findNode() emits `node` event with `error` error on no-data connection'] =
                 test.done();
             });
         });
-        tcpTransport.findNode({host: '127.0.0.1', port: 11234, id: barBase64}, 
-            fooBase64);
+        tcpTransport.findNode(
+            {host: '127.0.0.1', port: 11234, id: barBase64}, 
+            fooBase64,
+            {id: barBase64});
     });
 };
 
