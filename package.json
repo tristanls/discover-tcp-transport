@@ -1,24 +1,24 @@
 {
-    "name": "discover-tcp-transport",
-    "version": "0.1.0",
-    "description": "Node discovery TCP transport",
-    "scripts": {
-        "test": "node scripts/test.js"
-    },
-    "main": "index.js",
-    "devDependencies": {
-        "nodeunit": "0.8.1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git@github.com:tristanls/node-discover-tcp-transport.git"
-    },
-    "keywords": [
-        "discover",
-        "discovery",
-        "tcp",
-        "tcp transport"
-    ],
-    "author": "Tristan Slominski <tristan.slominski@gmail.com>",
-    "license": "MIT"
+  "name": "discover-tcp-transport",
+  "version": "1.0.0",
+  "description": "Node discovery TCP transport",
+  "scripts": {
+    "test": "node scripts/test.js"
+  },
+  "main": "index.js",
+  "devDependencies": {
+    "nodeunit": "0.8.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tristanls/node-discover-tcp-transport.git"
+  },
+  "keywords": [
+    "discover",
+    "discovery",
+    "tcp",
+    "tcp transport"
+  ],
+  "author": "Tristan Slominski <tristan.slominski@gmail.com>",
+  "license": "MIT"
 }
