@@ -59,9 +59,9 @@ tcpTransport.findNode(contact, 'Zm9v');
 
 #### TcpTransport.listen(options, callback)
 
-  * `options`: See `new TcpTransport(options)` `options`
-  * `callback`: See `tcpTransport.listen(callback)` `callback`
-  * Return: _Object_ an instance of TcpTransport with server running
+  * `options`: See `new TcpTransport(options)` `options`.
+  * `callback`: See `tcpTransport.listen(callback)` `callback`.
+  * Return: _Object_ An instance of TcpTransport with server running.
 
 Creates new TCP transport and starts the server.
 
@@ -69,47 +69,47 @@ Creates new TCP transport and starts the server.
 
   * `options`:
     * `host`: _String_ _(Default: 'localhost')_
-    * `port`: _Integer_ _(Default: 6742)_ A port value of zero will assign a random port
+    * `port`: _Integer_ _(Default: 6742)_ A port value of zero will assign a random port.
 
 Creates a new TCP transport.
 
 #### tcpTransport.close(callback)
 
-  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once the server is stopped
+  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once the server is stopped.
 
 Stops the server from listening to requests from other nodes.
 
 #### tcpTransport.findNode(contact, nodeId)
 
-  * `contact`: _Object_ The node to contact with request to find `nodeId`
-    * `id`: _String (base64)_ Base64 encoded contact node id
-    * `ip`: _String_ IP address to connect to
-    * `port`: _Integer_ port to connect to
-  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find
+  * `contact`: _Object_ The node to contact with request to find `nodeId`.
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `ip`: _String_ IP address to connect to.
+    * `port`: _Integer_ Port to connect to.
+  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find.
 
 Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE request to the contact at `contact.ip` and `contact.port` using TCP. The transport will emit `node` event when a response is processed (or times out).
 
 #### tcpTransport.listen(callback)
 
-  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once the server is up
+  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once the server is up.
 
 Starts the server to listen to requests from other nodes.
 
 #### tcpTransport.ping(contact)
 
-  * `contact`: _Object_ contact to ping
-    * `id`: _String (base64)_ Base64 encoded contact node id
-    * `ip`: _String_ IP address to connect to
-    * `port`: _Integer_ port to connect to  
+  * `contact`: _Object_ Contact to ping.
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `ip`: _String_ IP address to connect to.
+    * `port`: _Integer_ Port to connect to.
 
 Issues a PING request to the `contact`. In other words, pings the contact at the `contact.ip` and `contact.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
 
 #### Event: `findNode`
 
-  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find
-  * `callback`: _Function_ The callback to call with the result of processing the FIND-NODE request
-    * `error`: _Error_ if any
-    * `response`: _Object_ or _Array_ The response to FIND-NODE request
+  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find.
+  * `callback`: _Function_ The callback to call with the result of processing the FIND-NODE request.
+    * `error`: _Error_ An error, if any.
+    * `response`: _Object_ or _Array_ The response to FIND-NODE request.
 
 Emitted when another node issues a FIND-NODE request to this node.
 
@@ -137,12 +137,12 @@ In the above example, `nodeWithNodeId` is not an array, but an individual `conta
 
 #### Event: `node`
 
-  * `error`: _Error_ An error, if one occurred
-  * `contact`: _Object_ The node that FIND-NODE request was sent to
-  * `nodeId`: _String_ The original node id requested to be found
-  * `response`: _Object_ or _Array_ The response from the queried `contact`
+  * `error`: _Error_ An error, if one occurred.
+  * `contact`: _Object_ The node that FIND-NODE request was sent to.
+  * `nodeId`: _String (base64)_ The original base64 encoded node id requested to be found.
+  * `response`: _Object_ or _Array_ The response from the queried `contact`.
 
-If `error` occurs, the transport encountered an error when issuing the `findNode` request to the `contact`. 
+If `error` occurs, the transport encountered an error when issuing the `findNode` request to the `contact`. `contact` and `nodeId` will also be provided in case of an error. `response` is undefined if an `error` occurs.
 
 `response` will be an Array if the `contact` does not contain the `nodeId` requested. In this case `response` will be a `contact` list of nodes closer to the `nodeId` that the queried node is aware of. The usual step is to next query the returned contacts with the FIND-NODE request.
 
@@ -151,18 +151,19 @@ If `error` occurs, the transport encountered an error when issuing the `findNode
 #### Event: `reached`
 
   * `contact`: _Object_ The contact that was reached when pinged.
-    * `id`: _String (base64)_ Base64 encoded contact node id
-    * `ip`: _String_ IP address of reached contact
-    * `port`: _Integer_ port of reached contact
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `data`: _Any_ Data included with the contact.
+    * `ip`: _String_ IP address of reached contact.
+    * `port`: _Integer_ port of reached contact.
 
 Emitted when a previously pinged `contact` is deemed reachable by the transport.
 
 #### Event: `unreachable`
 
   * `contact`: _Object_ The contact that was unreachable when pinged.
-    * `id`: _String (base64)_ Base64 encoded contact node id
-    * `ip`: _String_ IP address of unreachable contact
-    * `port`: _Integer_ port of unreachable contact
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `ip`: _String_ IP address of unreachable contact.
+    * `port`: _Integer_ port of unreachable contact.
 
 Emitted when a previously pinged `contact` is deemed unreachable by the transport.
 
@@ -178,13 +179,13 @@ FIND-NODE request consists of base64 encoded node id followed by \r\n.
 
 #### Object Response
 
-    {"id":"Zm9v","ip":"127.0.0.1","port":6742}\r\n
+    {"id":"Zm9v","data":"some data","ip":"127.0.0.1","port":6742}\r\n
 
 An Object response is JSON representation of the contact followed by \r\n.
 
 #### Array Response
 
-    [{"id":"YmFy","ip":"192.168.0.1","port":6742},{"id":"YmF6","ip":"192.168.0.2","port":6742}]\r\n
+    [{"id":"YmFy","data":"some data","ip":"192.168.0.1","port":6742},{"id":"YmF6","data":"some data","ip":"192.168.0.2","port":6742}]\r\n
 
 An Array response is JSON representation of an array of closest contacts followed by \r\n.
 
