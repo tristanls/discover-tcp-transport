@@ -57,6 +57,18 @@ tcpTransport.findNode(contact, 'Zm9v');
 
 ### TcpTransport
 
+**Public API**
+  * [TcpTransport.listen(options, callback)](#tcptransportlistenoptions-callback)
+  * [new TcpTransport(options)](#new-tcptransportoptions)
+  * [tcpTransport.close(callback)](#tcptransportclosecallback)
+  * [tcpTransport.findNode(contact, nodeId)](#tcptransportfindnodecontact-nodeid)
+  * [tcpTransport.listen(callback)](#tcptransportlistencallback)
+  * [tcpTransport.ping(contact)](#tcptransportpingcontact)
+  * [Event 'findNode'](#event-findnode)
+  * [Event 'node'](#event-node)
+  * [Event 'reached'](#event-reached)
+  * [Event 'unreachable'](#event-unreachable)
+
 #### TcpTransport.listen(options, callback)
 
   * `options`: See `new TcpTransport(options)` `options`.
