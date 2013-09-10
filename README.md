@@ -20,39 +20,6 @@ _NOTE: Unreachability of nodes depends on the transport. For example, other tran
 
 _**WARNING**: Using TCP transport is meant primarily for development in a development environment. TCP transport exists because it is a low hanging fruit. It is most likely that it should be replaced with DTLS transport in production (maybe TLS if DTLS is not viable). There may also be a use-case for using UDP transport if communicating nodes are on a VPN/VPC. Only if UDP on a VPN/VPC seems not viable, should TCP transport be considered._
 
-## Usage
-
-```javascript
-var TcpTransport = require('discover-tcp-transport');
-
-var tcpTransport = new TcpTransport();
-
-tcpTransport.on('findNode', function (nodeId, callback) {
-    // process request
-    return callback(null /*error*/, closestNodes); // or nodeWithNodeId 
-});
-
-tcpTransport.on('node', function (error, contact, nodeId, response) {
-    // ... process event 
-});
-
-tcpTransport.on('reached', function (contact) {
-    // contact is reachable
-});
-
-tcpTransport.on('unreachable', function (contact) {
-    // contact is unreachable 
-});
-
-tcpTransport.listen(function () {
-    console.log('transport listening...'); 
-});
-
-tcpTransport.ping(contact);
-
-tcpTransport.findNode(contact, 'Zm9v');
-```
-
 ## Documentation
 
 ### TcpTransport
@@ -61,7 +28,7 @@ tcpTransport.findNode(contact, 'Zm9v');
   * [TcpTransport.listen(options, callback)](#tcptransportlistenoptions-callback)
   * [new TcpTransport(options)](#new-tcptransportoptions)
   * [tcpTransport.close(callback)](#tcptransportclosecallback)
-  * [tcpTransport.findNode(contact, nodeId)](#tcptransportfindnodecontact-nodeid)
+  * [tcpTransport.findNode(contact, nodeId, sender)](#tcptransportfindnodecontact-nodeid-sender)
   * [tcpTransport.listen(callback)](#tcptransportlistencallback)
   * [tcpTransport.ping(contact)](#tcptransportpingcontact)
   * [Event 'findNode'](#event-findnode)
@@ -137,7 +104,7 @@ Emitted when another node issues a FIND-NODE request to this node.
 
 ```javascript
 var tcpTransport = require('discover-tcp-transport');
-tcpTransport.on('findNode', function (nodeId, callback) {
+tcpTransport.on('findNode', function (nodeId, sender, callback) {
     // ... find closestNodes to the desired nodeId
     return callback(null, closestNodes);
 });
@@ -149,7 +116,7 @@ If the node handling the request itself contains the `nodeId`, then it sends onl
 
 ```javascript
 var tcpTransport = require('discover-tcp-transport');
-tcpTransport.on('findNode', function (nodeId, callback) {
+tcpTransport.on('findNode', function (nodeId, sender, callback) {
     // ... this node knows the node with nodeId or is itself node with nodeId
     return callback(null, nodeWithNodeId); 
 });
