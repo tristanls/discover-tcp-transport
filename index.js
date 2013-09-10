@@ -38,6 +38,7 @@ var TcpTransport = module.exports = function TcpTransport (options) {
     var self = this;
     options = options || {};
 
+    self.id = options.id;
     self.host = options.host || 'localhost';
     self.port = options.port || 6742;
 
@@ -60,14 +61,20 @@ TcpTransport.prototype.close = function close (callback) {
 
 // contact: Object *required* the contact to connect to
 //   id: String (base64) *required* Base64 encoded contact node id
-//   ip: String *required* IP address to connect to
+//   host: String *required* Host to connect to
 //   port: Integer *required* port to connect to
 // nodeId: String (base64) *required* Base64 encoded string representation of 
 //   the node id to find
-TcpTransport.prototype.findNode = function findNode (contact, nodeId) {
+// sender: Object *required* the contact sending the request
+//   id: String (base64) *required* Base64 encoded contact node id
+//   data: Any Sender contact data
+//   host: String *required* Host of the sender
+//   port: Integer *required* Port of the sender
+TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
     var self = this;
-    var client = net.connect({host: contact.ip, port: contact.port}, function () {
-        client.write(nodeId + '\r\n');
+    var client = net.connect({host: contact.host, port: contact.port}, function () {
+        var request = {request: {findNode: nodeId}, sender: sender};
+        client.write(JSON.stringify(request) + '\r\n');
     });
     var receivedData = false;
     client.on('data', function (data) {
@@ -99,17 +106,19 @@ TcpTransport.prototype.listen = function listen (callback) {
             connection.end();
         };
         connection.on('data', function (data) {
-            // verify that we have a line ending in \r\n
-            data = data.toString();
-            if (data[data.length - 2] != '\r' ||
-                data[data.length - 1] != '\n') {
+            try {
+                data = JSON.parse(data.toString("utf8"));
+            } catch (exception) {
                 return connection.end(); // kill connection
             }
-            data = data.slice(0, data.length - 2);
-            self.emit('findNode', data, function (error, response) {
-                if (error) return connection.end();
-                if (responseCallback) responseCallback(response);
-            });
+            if (data.request && data.request.findNode) {
+                self.emit('findNode', data.request.findNode, data.sender, function (error, response) {
+                    if (error) return connection.end();
+                    if (responseCallback) responseCallback(response);
+                });
+            } else {
+                return connection.end(); // kill connection
+            }
         });
         connection.on('end', function () {
             responseCallback = undefined;
@@ -123,11 +132,11 @@ TcpTransport.prototype.listen = function listen (callback) {
 
 // contact: Object *required* the contact to connect to
 //   id: String (base64) *required* Base64 encoded contact node id
-//   ip: String *required* IP address to connect to
+//   host: String *required* IP address to connect to
 //   port: Integer *required* port to connect to
 TcpTransport.prototype.ping = function ping (contact) {
     var self = this;
-    var client = net.connect({host: contact.ip, port: contact.port}, function () {
+    var client = net.connect({host: contact.host, port: contact.port}, function () {
         client.end();
     });
     client.on('end', function () {

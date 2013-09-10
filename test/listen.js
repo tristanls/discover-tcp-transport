@@ -69,19 +69,35 @@ test['listen() starts a TCP server on host:port from options'] = function (test)
 };
 
 test['listening transport emits `findNode` event when it receives FIND-NODE request'] = function (test) {
-    test.expect(2);
+    test.expect(6);
     var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
         var client = net.connect({host: 'localhost', port: 6742}, function () {
-            client.write(fooBase64 + '\r\n'); // FIND-NODE request
+            var request = {
+                request: {
+                    findNode: fooBase64
+                },
+                sender: {
+                    host: '127.0.0.1',
+                    port: 11111,
+                    id: barBase64,
+                    data: 'bar'
+                }
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
         });
         client.on('error', function (error) {
             // catch test connection cut
         });
     });
-    tcpTransport.on('findNode', function (nodeId, callback) {
+    tcpTransport.on('findNode', function (nodeId, sender, callback) {
         test.equal(nodeId, fooBase64);
+        test.equal(sender.id, barBase64);
+        test.equal(sender.host, "127.0.0.1");
+        test.equal(sender.port, 11111);
+        test.equal(sender.data, "bar");
         test.ok(callback instanceof Function);
         // call the callback for quick test termination
         callback();
@@ -94,10 +110,22 @@ test['listening transport emits `findNode` event when it receives FIND-NODE requ
 test['listening transport sends `findNode` event callback as response'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");    
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
         var client = net.connect({host: 'localhost', port: 6742}, function () {
-            client.write(fooBase64 + '\r\n'); // FIND-NODE request
+            var request = {
+                request: {
+                    findNode: fooBase64
+                },
+                sender: {
+                    host: '127.0.0.1',
+                    port: 11111,
+                    id: barBase64,
+                    data: 'bar'
+                }
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
         });
         client.on('data', function (data) {
             data = JSON.parse(data);
@@ -110,7 +138,7 @@ test['listening transport sends `findNode` event callback as response'] = functi
             // catch test connection cut
         });
     });
-    tcpTransport.on('findNode', function (nodeId, callback) {
+    tcpTransport.on('findNode', function (nodeId, sender, callback) {
         test.equal(nodeId, fooBase64);
         test.ok(callback instanceof Function);
         callback(null, {foo: "bar"});
@@ -120,10 +148,22 @@ test['listening transport sends `findNode` event callback as response'] = functi
 test['listening transport closes connection if `findNode` event callback has error set'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");      
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
         var client = net.connect({host: 'localhost', port: 6742}, function () {
-            client.write(fooBase64 + '\r\n'); // FIND-NODE request
+            var request = {
+                request: {
+                    findNode: fooBase64
+                },
+                sender: {
+                    host: '127.0.0.1',
+                    port: 11111,
+                    id: barBase64,
+                    data: 'bar'
+                }
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
         });
         client.on('data', function (data) {
             test.fail("Should not receive data");
@@ -138,7 +178,7 @@ test['listening transport closes connection if `findNode` event callback has err
             // catch test connection cut
         });
     });
-    tcpTransport.on('findNode', function (nodeId, callback) {
+    tcpTransport.on('findNode', function (nodeId, sender, callback) {
         test.equal(nodeId, fooBase64);
         test.ok(callback instanceof Function);
         callback(new Error("oops"));
