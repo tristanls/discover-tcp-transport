@@ -36,10 +36,11 @@ var net = require('net'),
 
 var test = module.exports = {};
 
-test['ping() connects to contact.ip:contact.port'] = function (test) {
-    test.expect(1);
+test['ping() connects to contact.host:contact.port'] = function (test) {
+    test.expect(2);
     var server = net.createServer(function (connection) {
-        test.equal(connection.remoteAddress, connection.localAddress);
+        test.equal(connection.localAddress, '127.0.0.1');
+        test.equal(connection.localPort, 11234);
         connection.end();
         server.close(function () {
             test.done();
@@ -47,42 +48,77 @@ test['ping() connects to contact.ip:contact.port'] = function (test) {
     });
     server.listen(11234, function () {
         var tcpTransport = new TcpTransport();
-        tcpTransport.ping({ip: '127.0.0.1', port: 11234});
+        tcpTransport.ping({host: '127.0.0.1', port: 11234}, {});
     });
 };
 
-test['ping() causes `reached` event to be emitted on successful connection'] = function (test) {
-    test.expect(4);
+test['ping() sends newline terminated base64 encoded ping request with originator contact info'] = function (test) {
+    test.expect(6);
+    var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
-    var testContact = {ip: '127.0.0.1', port: 11234, id: barBase64};
+    var fooContact = {host: '127.0.0.1', port: 11234, id: fooBase64, data: "foo"};
+    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
     var server = net.createServer(function (connection) {
         test.ok(true); // assert that connection happened
-        connection.end();
-    });
-    server.listen(11234, function () {
-        var tcpTransport = new TcpTransport();
-        tcpTransport.on('reached', function (contact) {
-            test.equal(contact.id, barBase64);
-            test.equal(contact.ip, testContact.ip);
-            test.equal(contact.port, testContact.port);
+        connection.on('data', function (data) {
+            // only expecting one chunk
+            var data = JSON.parse(data.toString("utf8"));
+            test.equal(data.request.ping, fooBase64);
+            test.equal(data.sender.id, barContact.id);
+            test.equal(data.sender.host, barContact.host);
+            test.equal(data.sender.port, barContact.port);
+            test.equal(data.sender.data, barContact.data);
+            connection.end();
             server.close(function () {
                 test.done();
             });
         });
-        tcpTransport.ping(testContact);
+    });
+    server.listen(11234, function () {
+        var tcpTransport = new TcpTransport();
+        tcpTransport.ping(fooContact, barContact);
+    });
+};  
+
+test['ping() causes `reached` event to be emitted on successful ping'] = function (test) {
+    test.expect(5);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var fooContact = {host: '127.0.0.1', port: 11234, id: fooBase64, data: "foo"};
+    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
+    var server = net.createServer(function (connection) {
+        test.ok(true); // assert that connection happened
+        // assume correct request with data and such
+        connection.end(JSON.stringify(fooContact) + '\r\n');
+    });
+    server.listen(11234, function () {
+        var tcpTransport = new TcpTransport();
+        tcpTransport.on('reached', function (contact) {
+            test.equal(contact.id, fooBase64);
+            test.equal(contact.host, fooContact.host);
+            test.equal(contact.port, fooContact.port);
+            test.equal(contact.data, fooContact.data);
+            server.close(function () {
+                test.done();
+            });
+        });
+        tcpTransport.ping(fooContact, barContact);
     });
 };
 
 test['ping() causes `unreachable` event to be emitted on failed connection'] = function (test) {
-    test.expect(3);
+    test.expect(4);
+    var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
-    var testContact = {ip: '127.0.0.1', port: 11000, id: barBase64};
+    var fooContact = {host: '127.0.0.1', port: 11999, id: fooBase64, data: "foo"};
+    var barContact = {host: '127.0.0.1', port: 11000, id: barBase64, data: "bar"};
     var tcpTransport = new TcpTransport();
     tcpTransport.on('unreachable', function (contact) {
-        test.equal(contact.id, barBase64);
-        test.equal(contact.ip, testContact.ip);
-        test.equal(contact.port, testContact.port);
+        test.equal(contact.id, fooBase64);
+        test.equal(contact.host, fooContact.host);
+        test.equal(contact.port, fooContact.port);
+        test.equal(contact.data, fooContact.data);
         test.done();
     });
-    tcpTransport.ping(testContact);
+    tcpTransport.ping(fooContact, barContact);
 };

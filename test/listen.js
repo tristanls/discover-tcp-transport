@@ -184,3 +184,112 @@ test['listening transport closes connection if `findNode` event callback has err
         callback(new Error("oops"));
     });
 };
+
+test['listening transport emits `ping` event when it receives PING request'] = function (test) {
+    test.expect(6);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var fooContact = {host: '127.0.0.1', port: 6742, id: fooBase64, data: "foo"};
+    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
+    var tcpTransport = new TcpTransport();
+    tcpTransport.listen(function () {
+        var client = net.connect(fooContact, function () {
+            var request = {
+                request: {
+                    ping: fooBase64
+                },
+                sender: barContact
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // PING request
+        });
+        client.on('error', function (error) {
+            // catch test connection cut
+        });
+    });
+    tcpTransport.on('ping', function (nodeId, sender, callback) {
+        test.equal(nodeId, fooBase64);
+        test.equal(sender.id, barContact.id);
+        test.equal(sender.host, barContact.host);
+        test.equal(sender.port, barContact.port);
+        test.equal(sender.data, barContact.data);
+        test.ok(callback instanceof Function);
+        // call the callback for quick test termination
+        callback();
+        tcpTransport.close(function () {
+            test.done();
+        });
+    });
+};
+
+
+test['listening transport sends `ping` event callback as response'] = function (test) {
+    test.expect(3);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var fooContact = {host: '127.0.0.1', port: 6742, id: fooBase64, data: "foo"};
+    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
+    var tcpTransport = new TcpTransport();
+    tcpTransport.listen(function () {
+        var client = net.connect(fooContact, function () {
+            var request = {
+                request: {
+                    ping: fooBase64
+                },
+                sender: barContact
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // PING request
+        });
+        client.on('data', function (data) {
+            data = JSON.parse(data);
+            test.deepEqual(fooContact, data);
+            tcpTransport.close(function () {
+                test.done();
+            });
+        });
+        client.on('error', function (error) {
+            // catch test connection cut
+        });
+    });
+    tcpTransport.on('ping', function (nodeId, sender, callback) {
+        test.equal(nodeId, fooBase64);
+        test.ok(callback instanceof Function);
+        callback(null, fooContact);
+    });
+};
+
+test['listening transport closes connection if `ping` event callback has error set'] = function (test) {
+    test.expect(3);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var fooContact = {host: '127.0.0.1', port: 6742, id: fooBase64, data: "foo"};
+    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
+    var tcpTransport = new TcpTransport();
+    tcpTransport.listen(function () {
+        var client = net.connect(fooContact, function () {
+            var request = {
+                request: {
+                    ping: fooBase64
+                },
+                sender: barContact
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // PING request
+        });
+        client.on('data', function (data) {
+            test.fail("Should not receive data");
+        });
+        client.on('end', function() {
+            test.ok(true); // assert closed connection
+            tcpTransport.close(function () {
+                test.done();
+            });            
+        });        
+        client.on('error', function (error) {
+            // catch test connection cut
+        });
+    });    
+    tcpTransport.on('ping', function (nodeId, sender, callback) {
+        test.equal(nodeId, fooBase64);
+        test.ok(callback instanceof Function);
+        callback(new Error("oops"));
+    });
+};

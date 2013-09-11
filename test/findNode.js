@@ -64,7 +64,7 @@ test['findNode() sends newline terminated base64 encoded findNode request with o
         connection.on('data', function (data) {
             var data = JSON.parse(data.toString("utf8"));  
             test.equal(data.request.findNode, fooBase64);
-            test.ok(data.sender.id, barBase64);
+            test.equal(data.sender.id, barBase64);
             test.equal(data.sender.host, "127.0.0.1");
             test.equal(data.sender.port, 11111);
             test.equal(data.sender.data, "bar");
@@ -153,8 +153,8 @@ test['findNode() emits `node` event with response Array if node is not found'] =
     });
 };
 
-test['findNode() emits `reached` event on successful connection'] = function (test) {
-    test.expect(3);
+test['findNode() does not emit `reached` event on successful connection'] = function (test) {
+    test.expect(0);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
     var server = net.createServer(function (connection) {
@@ -163,9 +163,9 @@ test['findNode() emits `reached` event on successful connection'] = function (te
     server.listen(11234, function () {
         var tcpTransport = new TcpTransport();
         tcpTransport.on('reached', function (contact) {
-            test.equal(contact.host, '127.0.0.1');
-            test.equal(contact.port, 11234);
-            test.equal(contact.id, barBase64);
+            test.fail('`reached` cannot be determined from connection alone');
+        });
+        tcpTransport.on('node', function () {
             server.close(function () {
                 test.done();
             });

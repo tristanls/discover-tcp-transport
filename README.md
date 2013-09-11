@@ -30,9 +30,10 @@ _**WARNING**: Using TCP transport is meant primarily for development in a develo
   * [tcpTransport.close(callback)](#tcptransportclosecallback)
   * [tcpTransport.findNode(contact, nodeId, sender)](#tcptransportfindnodecontact-nodeid-sender)
   * [tcpTransport.listen(callback)](#tcptransportlistencallback)
-  * [tcpTransport.ping(contact)](#tcptransportpingcontact)
+  * [tcpTransport.ping(contact, sender)](#tcptransportpingcontact-sender)
   * [Event 'findNode'](#event-findnode)
   * [Event 'node'](#event-node)
+  * [Event 'ping'](#event-ping)
   * [Event 'reached'](#event-reached)
   * [Event 'unreachable'](#event-unreachable)
 
@@ -79,12 +80,17 @@ Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE req
 
 Starts the server to listen to requests from other nodes.
 
-#### tcpTransport.ping(contact)
+#### tcpTransport.ping(contact, sender)
 
   * `contact`: _Object_ Contact to ping.
     * `id`: _String (base64)_ Base64 encoded contact node id.
     * `host`: _String_ Host to connect to.
     * `port`: _Integer_ Port to connect to.
+  * `sender`: _Object_ The contact making the request.
+    * `id`: _String (base64)_ Base64 encoded sender node id.
+    * `data`: _Any_ Sender node data.
+    * `host`: _String_ Host of the sender.
+    * `port`: _Integer_ Port of the sender.    
 
 Issues a PING request to the `contact`. In other words, pings the contact at the `contact.host` and `contact.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
 
@@ -137,6 +143,40 @@ If `error` occurs, the transport encountered an error when issuing the `findNode
 
 `response` will be an Object if the `contact` contains the `nodeId`. In other words, the node has been found.
 
+#### Event: `ping`
+
+  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id being pinged.
+  * `sender`: _Object_ The contact making the request.
+    * `id`: _String (base64)_ Base64 encoded sender node id.
+    * `data`: _Any_ Sender node data.
+    * `host`: _String_ Host of the sender.
+    * `port`: _Integer_ Port of the sender.
+  * `callback`: _Function_ The callback to call with the result of processing the PING request.
+    * `error`: _Error_ An error, if any.
+    * `response`: _Object_ The response to PING request, if any.
+
+Emitted when another node issues a PING request to this node.
+
+```javascript
+var tcpTransport = require('discover-tcp-transport');
+tcpTransport.on('ping', function (nodeId, sender, callback) {
+    // ... verify that we have the exact node specified by nodeId
+    return callback(null, contact); 
+});
+```
+
+In the above example `contact` is an Object representing the answer to `ping` query.
+
+If the exact node specified by nodeId does not exist, an error shall be returned as shown below:
+
+```javascript
+var tcpTransport = require('discover-tcp-transport');
+tcpTransport.on('ping', function (nodeId, sender, callback) {
+    // ...we don't have the nodeId specified
+    return callback(true); 
+});
+```
+
 #### Event: `reached`
 
   * `contact`: _Object_ The contact that was reached when pinged.
@@ -164,7 +204,7 @@ Wire protocol for TCP transport is simple one-line \r\n terminated ASCII.
 
     {"request":{"findNode":"Zm9v"},"sender":{"id":"YmF6","data":"some data","host":"127.0.0.1","port":6742}}\r\n
 
-FIND-NODE request consists of base64 encoded node id followed by \r\n.
+FIND-NODE request consists of a JSON object with base64 encoded node id and a sender followed by \r\n as shown above.
 
 #### Object Response
 
@@ -180,4 +220,16 @@ An Array response is JSON representation of an array of closest contacts followe
 
 ### PING
 
-Ping tests connectivity only and transfers no data.
+    {"request":{"ping":"Zm9v"},"sender":{"id":"YmF6","data":"some data","host":"127.0.0.1","port":6742}}\r\n
+
+PING request consists of a JSON object with base64 encoded node id and a sender followed by \r\n as shown above.
+
+#### Object Response
+
+    {"id":"Zm9v","data":"some data","host":"127.0.0.1","port":6742}\r\n
+
+An Object response is JSON representation of the pinged contact followed by \r\n.
+
+#### Failure Responses
+
+Closing the connection without an object response or inability to connect in the first place indicates a PING failure.
