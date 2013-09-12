@@ -80,10 +80,12 @@ test['listening transport emits `findNode` event when it receives FIND-NODE requ
                     findNode: fooBase64
                 },
                 sender: {
-                    host: '127.0.0.1',
-                    port: 11111,
                     id: barBase64,
-                    data: 'bar'
+                    data: 'bar',
+                    transport: {
+                        host: '127.0.0.1',
+                        port: 11111
+                    }
                 }
             };
             client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
@@ -95,8 +97,8 @@ test['listening transport emits `findNode` event when it receives FIND-NODE requ
     tcpTransport.on('findNode', function (nodeId, sender, callback) {
         test.equal(nodeId, fooBase64);
         test.equal(sender.id, barBase64);
-        test.equal(sender.host, "127.0.0.1");
-        test.equal(sender.port, 11111);
+        test.equal(sender.transport.host, "127.0.0.1");
+        test.equal(sender.transport.port, 11111);
         test.equal(sender.data, "bar");
         test.ok(callback instanceof Function);
         // call the callback for quick test termination
@@ -119,10 +121,12 @@ test['listening transport sends `findNode` event callback as response'] = functi
                     findNode: fooBase64
                 },
                 sender: {
-                    host: '127.0.0.1',
-                    port: 11111,
                     id: barBase64,
-                    data: 'bar'
+                    data: 'bar',
+                    transport: {                        
+                        host: '127.0.0.1',
+                        port: 11111
+                    }
                 }
             };
             client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
@@ -148,7 +152,8 @@ test['listening transport sends `findNode` event callback as response'] = functi
 test['listening transport closes connection if `findNode` event callback has error set'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
-    var barBase64 = new Buffer("bar").toString("base64");      
+    var barBase64 = new Buffer("bar").toString("base64");  
+    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};    
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
         var client = net.connect({host: 'localhost', port: 6742}, function () {
@@ -156,12 +161,7 @@ test['listening transport closes connection if `findNode` event callback has err
                 request: {
                     findNode: fooBase64
                 },
-                sender: {
-                    host: '127.0.0.1',
-                    port: 11111,
-                    id: barBase64,
-                    data: 'bar'
-                }
+                sender: barContact
             };
             client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
         });
@@ -189,11 +189,11 @@ test['listening transport emits `ping` event when it receives PING request'] = f
     test.expect(6);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
-    var fooContact = {host: '127.0.0.1', port: 6742, id: fooBase64, data: "foo"};
-    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
+    var fooContact = {transport: {host: '127.0.0.1', port: 6742}, id: fooBase64, data: "foo"};
+    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
-        var client = net.connect(fooContact, function () {
+        var client = net.connect(fooContact.transport, function () {
             var request = {
                 request: {
                     ping: fooBase64
@@ -209,8 +209,8 @@ test['listening transport emits `ping` event when it receives PING request'] = f
     tcpTransport.on('ping', function (nodeId, sender, callback) {
         test.equal(nodeId, fooBase64);
         test.equal(sender.id, barContact.id);
-        test.equal(sender.host, barContact.host);
-        test.equal(sender.port, barContact.port);
+        test.equal(sender.transport.host, barContact.transport.host);
+        test.equal(sender.transport.port, barContact.transport.port);
         test.equal(sender.data, barContact.data);
         test.ok(callback instanceof Function);
         // call the callback for quick test termination
@@ -226,11 +226,11 @@ test['listening transport sends `ping` event callback as response'] = function (
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
-    var fooContact = {host: '127.0.0.1', port: 6742, id: fooBase64, data: "foo"};
-    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
+    var fooContact = {transport: {host: '127.0.0.1', port: 6742}, id: fooBase64, data: "foo"};
+    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
-        var client = net.connect(fooContact, function () {
+        var client = net.connect(fooContact.transport, function () {
             var request = {
                 request: {
                     ping: fooBase64
@@ -261,11 +261,11 @@ test['listening transport closes connection if `ping` event callback has error s
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
-    var fooContact = {host: '127.0.0.1', port: 6742, id: fooBase64, data: "foo"};
-    var barContact = {host: '127.0.0.1', port: 11111, id: barBase64, data: "bar"};
+    var fooContact = {transport: {host: '127.0.0.1', port: 6742}, id: fooBase64, data: "foo"};
+    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
-        var client = net.connect(fooContact, function () {
+        var client = net.connect(fooContact.transport, function () {
             var request = {
                 request: {
                     ping: fooBase64

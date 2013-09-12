@@ -61,23 +61,28 @@ TcpTransport.prototype.close = function close (callback) {
 
 // contact: Object *required* the contact to connect to
 //   id: String (base64) *required* Base64 encoded contact node id
-//   host: String *required* Host to connect to
-//   port: Integer *required* port to connect to
+//   transport: Object *required* the transport object
+//     host: String *required* Host to connect to
+//     port: Integer *required* port to connect to
 // nodeId: String (base64) *required* Base64 encoded string representation of 
 //   the node id to find
 // sender: Object *required* the contact sending the request
 //   id: String (base64) *required* Base64 encoded contact node id
 //   data: Any Sender contact data
-//   host: String *required* Host of the sender
-//   port: Integer *required* Port of the sender
+//   transport: Object *required* the transport object
+//     host: String *required* Host of the sender
+//     port: Integer *required* Port of the sender
 TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
     var self = this;
-    var client = net.connect({host: contact.host, port: contact.port}, function () {
-        sender.host = sender.host || self.host;
-        sender.port = sender.port || self.port;
-        var request = {request: {findNode: nodeId}, sender: sender};
-        client.write(JSON.stringify(request) + '\r\n');
-    });
+    var client = net.connect(
+        {host: contact.transport.host, port: contact.transport.port}, 
+        function () {
+            sender.transport = sender.transport || {};
+            sender.transport.host = sender.transport.host || self.host;
+            sender.transport.port = sender.transport.port || self.port;
+            var request = {request: {findNode: nodeId}, sender: sender};
+            client.write(JSON.stringify(request) + '\r\n');
+        });
     var receivedData = false;
     client.on('data', function (data) {
         receivedData = true;
@@ -139,28 +144,34 @@ TcpTransport.prototype.listen = function listen (callback) {
 
 // contact: Object *required* the contact to connect to
 //   id: String (base64) *required* Base64 encoded contact node id
-//   host: String *required* IP address to connect to
-//   port: Integer *required* port to connect to
+//   transport: Object *required* the transport object
+//     host: String *required* IP address to connect to
+//     port: Integer *required* port to connect to
 // sender: Object *required* the contact sending the request
 //   id: String (base64) *required* Base64 encoded contact node id
 //   data: Any Sender contact data
-//   host: String *required* Host of the sender
-//   port: Integer *required* Port of the sender
+//   transport: Object *required* the transport object
+//     host: String *required* Host of the sender
+//     port: Integer *required* Port of the sender
 TcpTransport.prototype.ping = function ping (contact, sender) {
     var self = this;
-    var client = net.connect({host: contact.host, port: contact.port}, function () {
-        sender.host = sender.host || self.host;
-        sender.port = sender.port || self.port;
-        var request = {request: {ping: contact.id}, sender: sender};
-        client.write(JSON.stringify(request) + '\r\n');
-    });
+    var client = net.connect(
+        {host: contact.transport.host, port: contact.transport.port}, 
+        function () {
+            sender.transport = sender.transport || {};
+            sender.transport.host = sender.transport.host || self.host;
+            sender.transport.port = sender.transport.port || self.port;
+            var request = {request: {ping: contact.id}, sender: sender};
+            client.write(JSON.stringify(request) + '\r\n');
+        });
     var receivedData = false;
     client.on('data', function (data) {
         receivedData = true;
         try {
             data = JSON.parse(data.toString());
-            if (data.id === undefined || data.host === undefined
-                || data.port === undefined) { // data.data is optional
+            if (data.id === undefined || data.transport === undefined
+                || data.transport.host === undefined
+                || data.transport.port === undefined) { // data.data is optional
                 return self.emit('unreachable', contact);
             }
             return self.emit('reached', contact);

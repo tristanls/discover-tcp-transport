@@ -63,14 +63,16 @@ Stops the server from listening to requests from other nodes.
 
   * `contact`: _Object_ The node to contact with request to find `nodeId`.
     * `id`: _String (base64)_ Base64 encoded contact node id.
-    * `host`: _String_ IP address to connect to.
-    * `port`: _Integer_ Port to connect to.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ IP address to connect to.
+      * `port`: _Integer_ Port to connect to.
   * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find.
   * `sender`: _Object_ The node making the request
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `host`: _String_ Host to connect to.
-    * `port`: _Integer_ Port to connect to.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host to connect to.
+      * `port`: _Integer_ Port to connect to.
 
 Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE request to the contact at `contact.host` and `contact.port` using TCP. The transport will emit `node` event when a response is processed (or times out).
 
@@ -84,15 +86,17 @@ Starts the server to listen to requests from other nodes.
 
   * `contact`: _Object_ Contact to ping.
     * `id`: _String (base64)_ Base64 encoded contact node id.
-    * `host`: _String_ Host to connect to.
-    * `port`: _Integer_ Port to connect to.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host to connect to.
+      * `port`: _Integer_ Port to connect to.
   * `sender`: _Object_ The contact making the request.
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `host`: _String_ Host of the sender.
-    * `port`: _Integer_ Port of the sender.    
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of the sender.
+      * `port`: _Integer_ Port of the sender.    
 
-Issues a PING request to the `contact`. In other words, pings the contact at the `contact.host` and `contact.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
+Issues a PING request to the `contact`. In other words, pings the contact at the `contact.transport.host` and `contact.transport.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
 
 #### Event: `findNode`
 
@@ -100,8 +104,9 @@ Issues a PING request to the `contact`. In other words, pings the contact at the
   * `sender`: _Object_ The contact making the request.
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `host`: _String_ Host of the sender.
-    * `port`: _Integer_ Port of the sender.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of the sender.
+      * `port`: _Integer_ Port of the sender.
   * `callback`: _Function_ The callback to call with the result of processing the FIND-NODE request.
     * `error`: _Error_ An error, if any.
     * `response`: _Object_ or _Array_ The response to FIND-NODE request.
@@ -149,8 +154,9 @@ If `error` occurs, the transport encountered an error when issuing the `findNode
   * `sender`: _Object_ The contact making the request.
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `host`: _String_ Host of the sender.
-    * `port`: _Integer_ Port of the sender.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of the sender.
+      * `port`: _Integer_ Port of the sender.
   * `callback`: _Function_ The callback to call with the result of processing the PING request.
     * `error`: _Error_ An error, if any.
     * `response`: _Object_ The response to PING request, if any.
@@ -182,8 +188,9 @@ tcpTransport.on('ping', function (nodeId, sender, callback) {
   * `contact`: _Object_ The contact that was reached when pinged.
     * `id`: _String (base64)_ Base64 encoded contact node id.
     * `data`: _Any_ Data included with the contact.
-    * `host`: _String_ Host of reached contact.
-    * `port`: _Integer_ port of reached contact.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of reached contact.
+      * `port`: _Integer_ port of reached contact.
 
 Emitted when a previously pinged `contact` is deemed reachable by the transport.
 
@@ -191,8 +198,9 @@ Emitted when a previously pinged `contact` is deemed reachable by the transport.
 
   * `contact`: _Object_ The contact that was unreachable when pinged.
     * `id`: _String (base64)_ Base64 encoded contact node id.
-    * `host`: _String_ Host of unreachable contact.
-    * `port`: _Integer_ port of unreachable contact.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of unreachable contact.
+      * `port`: _Integer_ port of unreachable contact.
 
 Emitted when a previously pinged `contact` is deemed unreachable by the transport.
 
@@ -202,31 +210,31 @@ Wire protocol for TCP transport is simple one-line \r\n terminated ASCII.
 
 ### FIND-NODE
 
-    {"request":{"findNode":"Zm9v"},"sender":{"id":"YmF6","data":"some data","host":"127.0.0.1","port":6742}}\r\n
+    {"request":{"findNode":"Zm9v"},"sender":{"id":"YmF6","data":"some data","transport":{"host":"127.0.0.1","port":6742}}}\r\n
 
 FIND-NODE request consists of a JSON object with base64 encoded node id and a sender followed by \r\n as shown above.
 
 #### Object Response
 
-    {"id":"Zm9v","data":"some data","host":"127.0.0.1","port":6742}\r\n
+    {"id":"Zm9v","data":"some data","transport":{"host":"127.0.0.1","port":6742}}\r\n
 
 An Object response is JSON representation of the contact followed by \r\n.
 
 #### Array Response
 
-    [{"id":"YmFy","data":"some data","host":"192.168.0.1","port":6742},{"id":"YmF6","data":"some data","host":"192.168.0.2","port":6742}]\r\n
+    [{"id":"YmFy","data":"some data","transport":{"host":"192.168.0.1","port":6742}},{"id":"YmF6","data":"some data","transport":{"host":"192.168.0.2","port":6742}}]\r\n
 
 An Array response is JSON representation of an array of closest contacts followed by \r\n.
 
 ### PING
 
-    {"request":{"ping":"Zm9v"},"sender":{"id":"YmF6","data":"some data","host":"127.0.0.1","port":6742}}\r\n
+    {"request":{"ping":"Zm9v"},"sender":{"id":"YmF6","data":"some data","transport":{"host":"127.0.0.1","port":6742}}}\r\n
 
 PING request consists of a JSON object with base64 encoded node id and a sender followed by \r\n as shown above.
 
 #### Object Response
 
-    {"id":"Zm9v","data":"some data","host":"127.0.0.1","port":6742}\r\n
+    {"id":"Zm9v","data":"some data","transport":{"host":"127.0.0.1","port":6742}}\r\n
 
 An Object response is JSON representation of the pinged contact followed by \r\n.
 
