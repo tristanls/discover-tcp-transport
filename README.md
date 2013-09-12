@@ -114,7 +114,8 @@ Issues a PING request to the `contact`. In other words, pings the contact at the
 Emitted when another node issues a FIND-NODE request to this node.
 
 ```javascript
-var tcpTransport = require('discover-tcp-transport');
+var TcpTransport = require('discover-tcp-transport');
+var tcpTransport = new TcpTransport();
 tcpTransport.on('findNode', function (nodeId, sender, callback) {
     // ... find closestNodes to the desired nodeId
     return callback(null, closestNodes);
@@ -126,7 +127,8 @@ In the above example `closestNodes` is an Array of contacts that are closest kno
 If the node handling the request itself contains the `nodeId`, then it sends only itself back.
 
 ```javascript
-var tcpTransport = require('discover-tcp-transport');
+var TcpTransport = require('discover-tcp-transport');
+var tcpTransport = new TcpTransport();
 tcpTransport.on('findNode', function (nodeId, sender, callback) {
     // ... this node knows the node with nodeId or is itself node with nodeId
     return callback(null, nodeWithNodeId); 
@@ -164,7 +166,8 @@ If `error` occurs, the transport encountered an error when issuing the `findNode
 Emitted when another node issues a PING request to this node.
 
 ```javascript
-var tcpTransport = require('discover-tcp-transport');
+var TcpTransport = require('discover-tcp-transport');
+var tcpTransport = new TcpTransport();
 tcpTransport.on('ping', function (nodeId, sender, callback) {
     // ... verify that we have the exact node specified by nodeId
     return callback(null, contact); 
@@ -176,7 +179,8 @@ In the above example `contact` is an Object representing the answer to `ping` qu
 If the exact node specified by nodeId does not exist, an error shall be returned as shown below:
 
 ```javascript
-var tcpTransport = require('discover-tcp-transport');
+var TcpTransport = require('discover-tcp-transport');
+var tcpTransport = new TcpTransport();
 tcpTransport.on('ping', function (nodeId, sender, callback) {
     // ...we don't have the nodeId specified
     return callback(true); 
