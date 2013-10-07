@@ -56,7 +56,8 @@ TcpTransport.listen = function listen (options, callback) {
 // callback: Function *optional* callback to call once server is stopped
 TcpTransport.prototype.close = function close (callback) {
     var self = this;
-    if (self.server) self.server.close(callback);
+    if (self.server)
+        self.server.close(callback);
 };
 
 // contact: Object *required* the contact to connect to
@@ -75,12 +76,20 @@ TcpTransport.prototype.close = function close (callback) {
 TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
     var self = this;
     var client = net.connect(
-        {host: contact.transport.host, port: contact.transport.port}, 
+        {
+            host: contact.transport.host,
+            port: contact.transport.port
+        },
         function () {
             sender.transport = sender.transport || {};
             sender.transport.host = sender.transport.host || self.host;
             sender.transport.port = sender.transport.port || self.port;
-            var request = {request: {findNode: nodeId}, sender: sender};
+            var request = {
+                request: {
+                    findNode: nodeId
+                },
+                sender: sender
+            };
             client.write(JSON.stringify(request) + '\r\n');
         });
     var receivedData = false;
@@ -120,13 +129,17 @@ TcpTransport.prototype.listen = function listen (callback) {
             }
             if (data.request && data.request.findNode) {
                 self.emit('findNode', data.request.findNode, data.sender, function (error, response) {
-                    if (error) return connection.end();
-                    if (responseCallback) responseCallback(response);
+                    if (error)
+                        return connection.end();
+                    if (responseCallback)
+                        responseCallback(response);
                 });
             } else if (data.request && data.request.ping) {
                 self.emit('ping', data.request.ping, data.sender, function (error, response) {
-                    if (error) return connection.end();
-                    if (responseCallback) responseCallback(response);
+                    if (error)
+                        return connection.end();
+                    if (responseCallback)
+                        responseCallback(response);
                 });
             } else {
                 return connection.end(); // kill connection
@@ -156,7 +169,10 @@ TcpTransport.prototype.listen = function listen (callback) {
 TcpTransport.prototype.ping = function ping (contact, sender) {
     var self = this;
     var client = net.connect(
-        {host: contact.transport.host, port: contact.transport.port}, 
+        {
+            host: contact.transport.host,
+            port: contact.transport.port
+        },
         function () {
             sender.transport = sender.transport || {};
             sender.transport.host = sender.transport.host || self.host;
@@ -179,9 +195,10 @@ TcpTransport.prototype.ping = function ping (contact, sender) {
             // console.dir(exception);
             receivedData = false;
         }
-    });  
+    });
     client.on('end', function () {
-        if (!receivedData) return self.emit('unreachable', contact);
+        if (!receivedData)
+            return self.emit('unreachable', contact);
     });
     client.on('error', function (error) {
         return self.emit('unreachable', contact);
