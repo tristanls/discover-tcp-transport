@@ -1,6 +1,6 @@
 {
   "name": "discover-tcp-transport",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Node discovery TCP transport",
   "scripts": {
     "test": "node scripts/test.js"
