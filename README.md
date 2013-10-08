@@ -4,6 +4,10 @@ _Stability: 1 - [Experimental](https://github.com/tristanls/stability-index#stab
 
 TCP transport for [Discover](https://github.com/tristanls/node-discover), a distributed master-less node discovery mechanism that enables locating any entity (server, worker, drone, actor) based on node id.
 
+## Contributors
+
+[@tristanls](https://github.com/tristanls), [@mikedeboer](https://github.com/mikedeboer)
+
 ## Installation
 
     npm install discover-tcp-transport
