@@ -36,8 +36,9 @@ var events = require('events'),
 
 var TcpTransport = module.exports = function TcpTransport (options) {
     var self = this;
-    options = options || {};
     events.EventEmitter.call(self);
+
+    options = options || {};
 
     self.id = options.id;
     self.host = options.host || 'localhost';
@@ -48,20 +49,70 @@ var TcpTransport = module.exports = function TcpTransport (options) {
 
 util.inherits(TcpTransport, events.EventEmitter);
 
+/*
+  * `options`: See `new TcpTransport(options)` `options`.
+  * `callback`: See `tcpTransport.listen(callback)` `callback`.
+  Return: _Object_ An instance of TcpTransport with server running.
+*/
 TcpTransport.listen = function listen (options, callback) {
     var tcpTransport = new TcpTransport(options);
     tcpTransport.listen(callback);
     return tcpTransport;
 };
 
-// callback: Function *optional* callback to call once server is stopped
+/*
+  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once
+      the server is stopped.
+*/
 TcpTransport.prototype.close = function close (callback) {
     var self = this;
     if (self.server)
         self.server.close(callback);
 };
 
-// callback: Function *optional* callback to call once server is running
+/*
+  * `contact`: _Object_ The node to contact with request to find `nodeId`.
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ IP address to connect to.
+      * `port`: _Integer_ Port to connect to.
+  * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find.
+  * `sender`: _Object_ The node making the request
+    * `id`: _String (base64)_ Base64 encoded sender node id.
+    * `data`: _Any_ Sender node data.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host to connect to.
+      * `port`: _Integer_ Port to connect to.
+*/
+TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
+    var self = this;
+    self.rpc(contact, sender, {
+        request: {
+            findNode: nodeId
+        },
+        sender: sender
+    }, function(error, data) {
+        if (error) {
+            self.emit('node', new Error('unreachable'), contact, nodeId);
+            self.emit('unreachable', contact);
+            return;
+        }
+        if (!data)
+            return self.emit('node', new Error('error'), contact, nodeId);
+
+        try {
+            data = JSON.parse(data.toString());
+            return self.emit('node', null, contact, nodeId, data);
+        } catch (exception) {
+            self.emit('node', new Error('error'), contact, nodeId);
+        }
+    });
+};
+
+/*
+  * `callback`: _Function_ _(Default: undefined)_ Optional callback to call once
+      the server is up.
+*/
 TcpTransport.prototype.listen = function listen (callback) {
     var self = this;
     self.server = net.createServer(function (connection) {
@@ -103,55 +154,19 @@ TcpTransport.prototype.listen = function listen (callback) {
     self.server.listen(self.port, self.host, callback);
 };
 
-// contact: Object *required* the contact to connect to
-//   id: String (base64) *required* Base64 encoded contact node id
-//   transport: Object *required* the transport object
-//     host: String *required* Host to connect to
-//     port: Integer *required* port to connect to
-// nodeId: String (base64) *required* Base64 encoded string representation of
-//   the node id to find
-// sender: Object *required* the contact sending the request
-//   id: String (base64) *required* Base64 encoded contact node id
-//   data: Any Sender contact data
-//   transport: Object *required* the transport object
-//     host: String *required* Host of the sender
-//     port: Integer *required* Port of the sender
-TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
-    var self = this;
-    self.rpc(contact, sender, {
-        request: {
-            findNode: nodeId
-        },
-        sender: sender
-    }, function(error, data) {
-        if (error) {
-            self.emit('node', new Error('unreachable'), contact, nodeId);
-            self.emit('unreachable', contact);
-            return;
-        }
-        if (!data)
-            return self.emit('node', new Error('error'), contact, nodeId);
-
-        try {
-            data = JSON.parse(data.toString());
-            return self.emit('node', null, contact, nodeId, data);
-        } catch (exception) {
-            self.emit('node', new Error('error'), contact, nodeId);
-        }
-    });
-};
-
-// contact: Object *required* the contact to connect to
-//   id: String (base64) *required* Base64 encoded contact node id
-//   transport: Object *required* the transport object
-//     host: String *required* IP address to connect to
-//     port: Integer *required* port to connect to
-// sender: Object *required* the contact sending the request
-//   id: String (base64) *required* Base64 encoded contact node id
-//   data: Any Sender contact data
-//   transport: Object *required* the transport object
-//     host: String *required* Host of the sender
-//     port: Integer *required* Port of the sender
+/*
+  * `contact`: _Object_ Contact to ping.
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host to connect to.
+      * `port`: _Integer_ Port to connect to.
+  * `sender`: _Object_ The contact making the request.
+    * `id`: _String (base64)_ Base64 encoded sender node id.
+    * `data`: _Any_ Sender node data.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of the sender.
+      * `port`: _Integer_ Port of the sender.
+*/
 TcpTransport.prototype.ping = function ping (contact, sender) {
     var self = this;
     self.rpc(contact, sender, {
@@ -173,11 +188,27 @@ TcpTransport.prototype.ping = function ping (contact, sender) {
             return self.emit('reached', contact);
         } catch (exception) {
             // console.dir(exception);
-            self.emit('unreachable', contact);
+            return self.emit('unreachable', contact);
         }
     });
 };
 
+/*
+  * `contact`: _Object_ Contact to ping.
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host to connect to.
+      * `port`: _Integer_ Port to connect to.
+  * `sender`: _Object_ The contact making the request.
+    * `id`: _String (base64)_ Base64 encoded sender node id.
+    * `data`: _Any_ Sender node data.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of the sender.
+      * `port`: _Integer_ Port of the sender.
+  * `payload`: _String_ or _Object_ Payload to send on the wire. If an _Object_ 
+      is provided, it will be `JSON.stringify()`'ed.
+  * `callback`: _Function_ Callback to call with an error or response.
+*/
 TcpTransport.prototype.rpc = function rpc (contact, sender, payload, callback) {
     var self = this;
     var client = net.connect(

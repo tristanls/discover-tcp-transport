@@ -98,6 +98,26 @@ Starts the server to listen to requests from other nodes.
 
 Issues a PING request to the `contact`. In other words, pings the contact at the `contact.transport.host` and `contact.transport.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
 
+#### tcpTransport.rpc(contact, sender, payload, callback)
+
+_**CAUTION: reserved for internal use**_
+
+  * `contact`: _Object_ Contact to ping.
+    * `id`: _String (base64)_ Base64 encoded contact node id.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host to connect to.
+      * `port`: _Integer_ Port to connect to.
+  * `sender`: _Object_ The contact making the request.
+    * `id`: _String (base64)_ Base64 encoded sender node id.
+    * `data`: _Any_ Sender node data.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of the sender.
+      * `port`: _Integer_ Port of the sender.
+  * `payload`: _String_ or _Object_ Payload to send on the wire. If an _Object_ is provided, it will be `JSON.stringify()`'ed.
+  * `callback`: _Function_ Callback to call with an error or response.
+
+An internal common implementation for `tcpTransport.findNode(...)` and `tcpTransport.ping(...)`.
+
 #### Event: `findNode`
 
   * `nodeId`: _String (base64)_ Base64 encoded string representation of the node id to find.
