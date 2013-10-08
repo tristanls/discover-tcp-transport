@@ -37,6 +37,7 @@ var events = require('events'),
 var TcpTransport = module.exports = function TcpTransport (options) {
     var self = this;
     options = options || {};
+    events.EventEmitter.call(self);
 
     self.id = options.id;
     self.host = options.host || 'localhost';
@@ -58,59 +59,6 @@ TcpTransport.prototype.close = function close (callback) {
     var self = this;
     if (self.server)
         self.server.close(callback);
-};
-
-// contact: Object *required* the contact to connect to
-//   id: String (base64) *required* Base64 encoded contact node id
-//   transport: Object *required* the transport object
-//     host: String *required* Host to connect to
-//     port: Integer *required* port to connect to
-// nodeId: String (base64) *required* Base64 encoded string representation of 
-//   the node id to find
-// sender: Object *required* the contact sending the request
-//   id: String (base64) *required* Base64 encoded contact node id
-//   data: Any Sender contact data
-//   transport: Object *required* the transport object
-//     host: String *required* Host of the sender
-//     port: Integer *required* Port of the sender
-TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
-    var self = this;
-    var client = net.connect(
-        {
-            host: contact.transport.host,
-            port: contact.transport.port
-        },
-        function () {
-            sender.transport = sender.transport || {};
-            sender.transport.host = sender.transport.host || self.host;
-            sender.transport.port = sender.transport.port || self.port;
-            var request = {
-                request: {
-                    findNode: nodeId
-                },
-                sender: sender
-            };
-            client.write(JSON.stringify(request) + '\r\n');
-        });
-    var receivedData = false;
-    client.on('data', function (data) {
-        receivedData = true;
-        try {
-            data = JSON.parse(data.toString());
-            return self.emit('node', null, contact, nodeId, data);
-        } catch (exception) {
-            // console.dir(exception);
-            receivedData = false;
-        }
-    });  
-    client.on('end', function () {
-        if (!receivedData) self.emit('node', new Error('error'), contact, nodeId);
-    });
-    client.on('error', function (error) {
-        self.emit('node', new Error('unreachable'), contact, nodeId);
-        self.emit('unreachable', contact);
-        return;
-    });
 };
 
 // callback: Function *optional* callback to call once server is running
@@ -158,6 +106,44 @@ TcpTransport.prototype.listen = function listen (callback) {
 // contact: Object *required* the contact to connect to
 //   id: String (base64) *required* Base64 encoded contact node id
 //   transport: Object *required* the transport object
+//     host: String *required* Host to connect to
+//     port: Integer *required* port to connect to
+// nodeId: String (base64) *required* Base64 encoded string representation of
+//   the node id to find
+// sender: Object *required* the contact sending the request
+//   id: String (base64) *required* Base64 encoded contact node id
+//   data: Any Sender contact data
+//   transport: Object *required* the transport object
+//     host: String *required* Host of the sender
+//     port: Integer *required* Port of the sender
+TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
+    var self = this;
+    self.rpc(contact, sender, {
+        request: {
+            findNode: nodeId
+        },
+        sender: sender
+    }, function(error, data) {
+        if (error) {
+            self.emit('node', new Error('unreachable'), contact, nodeId);
+            self.emit('unreachable', contact);
+            return;
+        }
+        if (!data)
+            return self.emit('node', new Error('error'), contact, nodeId);
+
+        try {
+            data = JSON.parse(data.toString());
+            return self.emit('node', null, contact, nodeId, data);
+        } catch (exception) {
+            self.emit('node', new Error('error'), contact, nodeId);
+        }
+    });
+};
+
+// contact: Object *required* the contact to connect to
+//   id: String (base64) *required* Base64 encoded contact node id
+//   transport: Object *required* the transport object
 //     host: String *required* IP address to connect to
 //     port: Integer *required* port to connect to
 // sender: Object *required* the contact sending the request
@@ -168,6 +154,32 @@ TcpTransport.prototype.listen = function listen (callback) {
 //     port: Integer *required* Port of the sender
 TcpTransport.prototype.ping = function ping (contact, sender) {
     var self = this;
+    self.rpc(contact, sender, {
+        request: {
+            ping: contact.id
+        },
+        sender: sender
+    }, function(error, data) {
+        if (error || !data)
+            return self.emit('unreachable', contact);
+
+        try {
+            data = JSON.parse(data);
+            if (data.id === undefined || data.transport === undefined
+                || data.transport.host === undefined
+                || data.transport.port === undefined) { // data.data is optional
+                return self.emit('unreachable', contact);
+            }
+            return self.emit('reached', contact);
+        } catch (exception) {
+            // console.dir(exception);
+            self.emit('unreachable', contact);
+        }
+    });
+};
+
+TcpTransport.prototype.rpc = function rpc (contact, sender, payload, callback) {
+    var self = this;
     var client = net.connect(
         {
             host: contact.transport.host,
@@ -177,30 +189,22 @@ TcpTransport.prototype.ping = function ping (contact, sender) {
             sender.transport = sender.transport || {};
             sender.transport.host = sender.transport.host || self.host;
             sender.transport.port = sender.transport.port || self.port;
-            var request = {request: {ping: contact.id}, sender: sender};
-            client.write(JSON.stringify(request) + '\r\n');
+            if (typeof payload != "string")
+                payload = JSON.stringify(payload);
+            client.write(payload + '\r\n');
         });
-    var receivedData = false;
-    client.on('data', function (data) {
-        receivedData = true;
-        try {
-            data = JSON.parse(data.toString());
-            if (data.id === undefined || data.transport === undefined
-                || data.transport.host === undefined
-                || data.transport.port === undefined) { // data.data is optional
-                return self.emit('unreachable', contact);
-            }
-            return self.emit('reached', contact);
-        } catch (exception) {
-            // console.dir(exception);
-            receivedData = false;
-        }
+
+    var hasError = false;
+    var data = "";
+    client.on('data', function (buf) {
+        data += buf.toString("utf8");
     });
     client.on('end', function () {
-        if (!receivedData)
-            return self.emit('unreachable', contact);
+        if (!hasError)
+            callback(null, data);
     });
     client.on('error', function (error) {
-        return self.emit('unreachable', contact);
+        hasError = true;
+        callback(error);
     });
 };
