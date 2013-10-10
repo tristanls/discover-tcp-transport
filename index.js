@@ -86,7 +86,7 @@ TcpTransport.prototype.close = function close (callback) {
 */
 TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
     var self = this;
-    self.rpc(contact, sender, {
+    self.rpc(contact, {
         request: {
             findNode: nodeId
         },
@@ -169,7 +169,7 @@ TcpTransport.prototype.listen = function listen (callback) {
 */
 TcpTransport.prototype.ping = function ping (contact, sender) {
     var self = this;
-    self.rpc(contact, sender, {
+    self.rpc(contact, {
         request: {
             ping: contact.id
         },
@@ -199,17 +199,11 @@ TcpTransport.prototype.ping = function ping (contact, sender) {
     * `transport`: _Object_ TCP transport data.
       * `host`: _String_ Host to connect to.
       * `port`: _Integer_ Port to connect to.
-  * `sender`: _Object_ The contact making the request.
-    * `id`: _String (base64)_ Base64 encoded sender node id.
-    * `data`: _Any_ Sender node data.
-    * `transport`: _Object_ TCP transport data.
-      * `host`: _String_ Host of the sender.
-      * `port`: _Integer_ Port of the sender.
   * `payload`: _String_ or _Object_ Payload to send on the wire. If an _Object_ 
       is provided, it will be `JSON.stringify()`'ed.
   * `callback`: _Function_ Callback to call with an error or response.
 */
-TcpTransport.prototype.rpc = function rpc (contact, sender, payload, callback) {
+TcpTransport.prototype.rpc = function rpc (contact, payload, callback) {
     var self = this;
     var client = net.connect(
         {
@@ -217,9 +211,6 @@ TcpTransport.prototype.rpc = function rpc (contact, sender, payload, callback) {
             port: contact.transport.port
         },
         function () {
-            sender.transport = sender.transport || {};
-            sender.transport.host = sender.transport.host || self.host;
-            sender.transport.port = sender.transport.port || self.port;
             if (typeof payload != "string")
                 payload = JSON.stringify(payload);
             client.write(payload + '\r\n');
