@@ -4,7 +4,7 @@ listen.js - listen() test
 
 The MIT License (MIT)
 
-Copyright (c) 2013 Tristan Slominski
+Copyright (c) 2013-2014 Tristan Slominski
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -109,7 +109,7 @@ test['listening transport emits `findNode` event when it receives FIND-NODE requ
     });
 };
 
-test['listening transport sends `findNode` event callback as response'] = function (test) {
+test['listening transport sends `findNode` event callback as response, and adds transport information if it is an Object and not an Array'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");    
@@ -133,7 +133,13 @@ test['listening transport sends `findNode` event callback as response'] = functi
         });
         client.on('data', function (data) {
             data = JSON.parse(data);
-            test.deepEqual({foo: "bar"}, data);
+            test.deepEqual({
+                foo: "bar",
+                transport: {
+                    host: 'localhost',
+                    port: 6742
+                }
+            }, data);
             tcpTransport.close(function () {
                 test.done();
             });
@@ -146,6 +152,46 @@ test['listening transport sends `findNode` event callback as response'] = functi
         test.equal(nodeId, fooBase64);
         test.ok(callback instanceof Function);
         callback(null, {foo: "bar"});
+    });
+};
+
+test['listening transport sends `findNode` event callback as response, and does not add transport information if it is an Array and not an Object'] = function (test) {
+    test.expect(3);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var tcpTransport = new TcpTransport();
+    tcpTransport.listen(function () {
+        var client = net.connect({host: 'localhost', port: 6742}, function () {
+            var request = {
+                request: {
+                    findNode: fooBase64
+                },
+                sender: {
+                    id: barBase64,
+                    data: 'bar',
+                    transport: {
+                        host: '127.0.0.1',
+                        port: 11111
+                    }
+                }
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
+        });
+        client.on('data', function (data) {
+            data = JSON.parse(data);
+            test.deepEqual([{foo: "bar"}], data);
+            tcpTransport.close(function () {
+                test.done();
+            });
+        });
+        client.on('error', function (error) {
+            // catch test connection cut
+        });
+    });
+    tcpTransport.on('findNode', function (nodeId, sender, callback) {
+        test.equal(nodeId, fooBase64);
+        test.ok(callback instanceof Function);
+        callback(null, [{foo: "bar"}]);
     });
 };
 
@@ -222,15 +268,15 @@ test['listening transport emits `ping` event when it receives PING request'] = f
 };
 
 
-test['listening transport sends `ping` event callback as response'] = function (test) {
+test['listening transport sends `ping` event callback as response and adds transport information'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
-    var fooContact = {transport: {host: '127.0.0.1', port: 6742}, id: fooBase64, data: "foo"};
+    var fooContact = {id: fooBase64, data: "foo"};
     var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
-        var client = net.connect(fooContact.transport, function () {
+        var client = net.connect({host: '127.0.0.1', port: 6742}, function () {
             var request = {
                 request: {
                     ping: fooBase64
@@ -241,7 +287,14 @@ test['listening transport sends `ping` event callback as response'] = function (
         });
         client.on('data', function (data) {
             data = JSON.parse(data);
-            test.deepEqual(fooContact, data);
+            test.deepEqual({
+                id: fooBase64,
+                data: "foo",
+                transport: {
+                    host: 'localhost',
+                    port: 6742
+                }
+            }, data);
             tcpTransport.close(function () {
                 test.done();
             });
