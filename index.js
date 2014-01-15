@@ -120,14 +120,8 @@ TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
 */
 TcpTransport.prototype.listen = function listen (callback) {
     var self = this;
-
     self.server = net.createServer(function (connection) {
         var responseCallback = function (response) {
-            if (!Array.isArray(response) && typeof response === 'object') {
-                response.transport = response.transport || {};
-                response.transport.host = response.transport.host || self.host;
-                response.transport.port = response.transport.port || self.port;
-            }
             connection.write(JSON.stringify(response) + '\r\n');
             connection.end();
         };
