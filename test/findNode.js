@@ -36,7 +36,7 @@ var net = require('net'),
 
 var test = module.exports = {};
 
-test['findNode() connects to contact.host:contact.port'] = function (test) {
+test['findNode() connects to contact.transport.host:contact.transport.port'] = function (test) {
     test.expect(1);
     var server = net.createServer(function (connection) {
         test.equal(connection.remoteAddress, connection.localAddress);
@@ -59,7 +59,7 @@ test['findNode() connects to contact.host:contact.port'] = function (test) {
     });
 };
 
-test['findNode() sends newline terminated base64 encoded findNode request with originator contact info'] = function (test) {
+test['findNode() sends newline terminated base64 encoded findNode request with originator contact info (appending transport to originator contact if needed)'] = function (test) {
     test.expect(5);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
@@ -78,11 +78,14 @@ test['findNode() sends newline terminated base64 encoded findNode request with o
         });
     });
     server.listen(11234, function () {
-        var tcpTransport = new TcpTransport();
+        var tcpTransport = new TcpTransport({
+            host: '127.0.0.1',
+            port: 11111
+        });
         tcpTransport.findNode(
             {id: barBase64, transport:{host: '127.0.0.1', port: 11234}},
             fooBase64,
-            {id: barBase64, data: 'bar', transport:{host: '127.0.0.1', port: 11111}});
+            {id: barBase64, data: 'bar'});
     });
 };
 
@@ -244,5 +247,6 @@ test['findNode() emits `unreachable` event on failed connection'] = function (te
     });
     tcpTransport.findNode(
         {transport: {host: '127.0.0.1', port: 11000}, id: barBase64}, 
-        fooBase64);
+        fooBase64,
+        {id: barBase64});
 };
