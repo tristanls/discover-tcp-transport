@@ -4,7 +4,7 @@ ping.js - ping() test
 
 The MIT License (MIT)
 
-Copyright (c) 2013 Tristan Slominski
+Copyright (c) 2013-2014 Tristan Slominski
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -36,7 +36,7 @@ var net = require('net'),
 
 var test = module.exports = {};
 
-test['ping() connects to contact.host:contact.port'] = function (test) {
+test['ping() connects to contact.transport.host:contact.transport.port'] = function (test) {
     test.expect(2);
     var server = net.createServer(function (connection) {
         test.equal(connection.localAddress, '127.0.0.1');
@@ -52,12 +52,12 @@ test['ping() connects to contact.host:contact.port'] = function (test) {
     });
 };
 
-test['ping() sends newline terminated base64 encoded ping request with originator contact info'] = function (test) {
+test['ping() sends newline terminated base64 encoded ping request with originator contact info (appending transport to originator contact if needed)'] = function (test) {
     test.expect(6);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
     var fooContact = {transport: {host: '127.0.0.1', port: 11234}, id: fooBase64, data: "foo"};
-    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};
+    var barContact = {id: barBase64, data: "bar"};
     var server = net.createServer(function (connection) {
         test.ok(true); // assert that connection happened
         connection.on('data', function (data) {
@@ -65,8 +65,8 @@ test['ping() sends newline terminated base64 encoded ping request with originato
             var data = JSON.parse(data.toString("utf8"));
             test.equal(data.request.ping, fooBase64);
             test.equal(data.sender.id, barContact.id);
-            test.equal(data.sender.transport.host, barContact.transport.host);
-            test.equal(data.sender.transport.port, barContact.transport.port);
+            test.equal(data.sender.transport.host, '127.0.0.1');
+            test.equal(data.sender.transport.port, 11111);
             test.equal(data.sender.data, barContact.data);
             connection.end();
             server.close(function () {
@@ -75,7 +75,10 @@ test['ping() sends newline terminated base64 encoded ping request with originato
         });
     });
     server.listen(11234, function () {
-        var tcpTransport = new TcpTransport();
+        var tcpTransport = new TcpTransport({
+            host: '127.0.0.1',
+            port: 11111
+        });
         tcpTransport.ping(fooContact, barContact);
     });
 };  
@@ -85,14 +88,17 @@ test['ping() causes `reached` event to be emitted on successful ping'] = functio
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
     var fooContact = {transport: {host: '127.0.0.1', port: 11234}, id: fooBase64, data: "foo"};
-    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};
+    var barContact = {id: barBase64, data: "bar"};
     var server = net.createServer(function (connection) {
         test.ok(true); // assert that connection happened
         // assume correct request with data and such
         connection.end(JSON.stringify(fooContact) + '\r\n');
     });
     server.listen(11234, function () {
-        var tcpTransport = new TcpTransport();
+        var tcpTransport = new TcpTransport({
+            host: '127.0.0.1',
+            port: 11111
+        });
         tcpTransport.on('reached', function (contact) {
             test.equal(contact.id, fooBase64);
             test.equal(contact.transport.host, fooContact.transport.host);
@@ -111,7 +117,7 @@ test['ping() causes `unreachable` event to be emitted on failed connection'] = f
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
     var fooContact = {transport: {host: '127.0.0.1', port: 11999}, id: fooBase64, data: "foo"};
-    var barContact = {transport: {host: '127.0.0.1', port: 11000}, id: barBase64, data: "bar"};
+    var barContact = {id: barBase64, data: "bar"};
     var tcpTransport = new TcpTransport();
     tcpTransport.on('unreachable', function (contact) {
         test.equal(contact.id, fooBase64);

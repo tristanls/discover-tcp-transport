@@ -4,7 +4,7 @@ index.js - discover-tcp-transport: TCP transport for Discover node discovery
 
 The MIT License (MIT)
 
-Copyright (c) 2013 Tristan Slominski
+Copyright (c) 2013-2014 Tristan Slominski
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -163,12 +163,15 @@ TcpTransport.prototype.listen = function listen (callback) {
   * `sender`: _Object_ The contact making the request.
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `transport`: _Object_ TCP transport data.
-      * `host`: _String_ Host of the sender.
-      * `port`: _Integer_ Port of the sender.
+    * `transport`: _Object_ _(Optional)_ TCP transport data.
+      * `host`: _String_ _(Default: tcpTransport.host)_ Host to connect to.
+      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port to connect to.
 */
 TcpTransport.prototype.ping = function ping (contact, sender) {
     var self = this;
+    sender.transport = sender.transport || {};
+    sender.transport.host = sender.transport.host || self.host;
+    sender.transport.port = sender.transport.port || self.port;
     self.rpc(contact, {
         request: {
             ping: contact.id

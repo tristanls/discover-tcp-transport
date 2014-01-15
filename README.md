@@ -74,9 +74,9 @@ Stops the server from listening to requests from other nodes.
   * `sender`: _Object_ The node making the request
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `transport`: _Object_ TCP transport data.
-      * `host`: _String_ Host to connect to.
-      * `port`: _Integer_ Port to connect to.
+    * `transport`: _Object_ _(Optional)_ TCP transport data.
+      * `host`: _String_ _(Default: tcpTransport.host)_ Host to connect to.
+      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port to connect to.
 
 Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE request to the contact at `contact.host` and `contact.port` using TCP. The transport will emit `node` event when a response is processed (or times out).
 
