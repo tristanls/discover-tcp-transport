@@ -37,6 +37,7 @@ _**WARNING**: Using TCP transport is meant primarily for development in a develo
   * [tcpTransport.findNode(contact, nodeId, sender)](#tcptransportfindnodecontact-nodeid-sender)
   * [tcpTransport.listen(callback)](#tcptransportlistencallback)
   * [tcpTransport.ping(contact, sender)](#tcptransportpingcontact-sender)
+  * [tcpTransport.setTransportInfo(contact)](#tcptransportsettransportinfocontact)
   * [Event 'findNode'](#event-findnode)
   * [Event 'node'](#event-node)
   * [Event 'ping'](#event-ping)
@@ -117,6 +118,21 @@ _**CAUTION: reserved for internal use**_
   * `callback`: _Function_ Callback to call with an error or response.
 
 An internal common implementation for `tcpTransport.findNode(...)` and `tcpTransport.ping(...)`.
+
+#### tcpTransport.setTransportInfo(contact)
+
+  * `contact`: _Object_ A contact.
+  * Return: _Object_ `contact` with `contact.transport` populated.
+
+Sets `contact.transport` to TCP transport configured values. For example:
+
+```javascript
+var contact = {id: 'id', data: 'data'};
+var tcpTransport = new TcpTransport({host: 'foo.com', port: 8888});
+contact = tcpTransport.setTransportInfo(contact);
+assert.ok(contact.transport.host === 'foo.com'); // true
+assert.ok(contact.transport.port === 8888); // true
+```
 
 #### Event: `findNode`
 

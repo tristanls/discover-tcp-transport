@@ -230,3 +230,17 @@ TcpTransport.prototype.rpc = function rpc (contact, payload, callback) {
         callback(error);
     });
 };
+
+/*
+  * `contact`: _Object_ A contact.
+  * Return: _Object_ `contact` with `contact.transport` populated.
+*/
+TcpTransport.prototype.setTransportInfo = function setTransportInfo(contact) {
+    var self = this;
+
+    contact.transport = {
+        host: self.host,
+        port: self.port
+    };
+    return contact;
+};
