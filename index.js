@@ -80,17 +80,12 @@ TcpTransport.prototype.close = function close (callback) {
   * `sender`: _Object_ The node making the request
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `transport`: _Object_ _(Optional)_ TCP transport data.
-      * `host`: _String_ _(Default: tcpTransport.host)_ Host of the sender.
-      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port of the sender.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host to connect to.
+      * `port`: _Integer_ Port to connect to.
 */
 TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
     var self = this;
-
-    sender.transport = sender.transport || {};
-    sender.transport.host = sender.transport.host || self.host;
-    sender.transport.port = sender.transport.port || self.port;
-
     self.rpc(contact, {
         request: {
             findNode: nodeId
@@ -169,16 +164,14 @@ TcpTransport.prototype.listen = function listen (callback) {
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
     * `transport`: _Object_ _(Optional)_ TCP transport data.
-      * `host`: _String_ _(Default: tcpTransport.host)_ Host of the sender.
-      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port of the sender.
+      * `host`: _String_ _(Default: tcpTransport.host)_ Host to connect to.
+      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port to connect to.
 */
 TcpTransport.prototype.ping = function ping (contact, sender) {
     var self = this;
-
     sender.transport = sender.transport || {};
     sender.transport.host = sender.transport.host || self.host;
     sender.transport.port = sender.transport.port || self.port;
-
     self.rpc(contact, {
         request: {
             ping: contact.id

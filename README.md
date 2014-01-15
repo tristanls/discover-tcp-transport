@@ -77,8 +77,8 @@ Stops the server from listening to requests from other nodes.
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
     * `transport`: _Object_ _(Optional)_ TCP transport data.
-      * `host`: _String_ _(Default: tcpTransport.host)_ Host of the sender.
-      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port of the sender.
+      * `host`: _String_ _(Default: tcpTransport.host)_ Host to connect to.
+      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port to connect to.
 
 Issues a FIND-NODE request to the `contact`. In other words, sends FIND-NODE request to the contact at `contact.host` and `contact.port` using TCP. The transport will emit `node` event when a response is processed (or times out).
 
@@ -98,9 +98,9 @@ Starts the server to listen to requests from other nodes.
   * `sender`: _Object_ The contact making the request.
     * `id`: _String (base64)_ Base64 encoded sender node id.
     * `data`: _Any_ Sender node data.
-    * `transport`: _Object_ _(Optional)_ TCP transport data.
-      * `host`: _String_ _(Default: tcpTransport.host)_ Host of the sender.
-      * `port`: _Integer_ _(Default: tcpTransport.port)_ Port of the sender.
+    * `transport`: _Object_ TCP transport data.
+      * `host`: _String_ Host of the sender.
+      * `port`: _Integer_ Port of the sender.    
 
 Issues a PING request to the `contact`. In other words, pings the contact at the `contact.transport.host` and `contact.transport.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
 
