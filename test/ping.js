@@ -4,7 +4,7 @@ ping.js - ping() test
 
 The MIT License (MIT)
 
-Copyright (c) 2013 Tristan Slominski
+Copyright (c) 2013-2014 Tristan Slominski
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -36,7 +36,7 @@ var net = require('net'),
 
 var test = module.exports = {};
 
-test['ping() connects to contact.host:contact.port'] = function (test) {
+test['ping() connects to contact.transport.host:contact.transport.port'] = function (test) {
     test.expect(2);
     var server = net.createServer(function (connection) {
         test.equal(connection.localAddress, '127.0.0.1');
