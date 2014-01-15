@@ -2,7 +2,9 @@
 
 _Stability: 1 - [Experimental](https://github.com/tristanls/stability-index#stability-1---experimental)_
 
-TCP transport for [Discover](https://github.com/tristanls/node-discover), a distributed master-less node discovery mechanism that enables locating any entity (server, worker, drone, actor) based on node id.
+[![NPM version](https://badge.fury.io/js/discover-tcp-transport.png)](http://npmjs.org/package/discover-tcp-transport)
+
+TCP transport for [Discover](https://github.com/tristanls/discover), a distributed master-less node discovery mechanism that enables locating any entity (server, worker, drone, actor) based on node id.
 
 ## Contributors
 
@@ -153,7 +155,7 @@ tcpTransport.on('findNode', function (nodeId, sender, callback) {
 });
 ```
 
-In the above example, `nodeWithNodeId` is not an array, but an individual `contact` representing the answer to `findNode` query.
+In the above example, `nodeWithNodeId` is not an array, but an individual `contact` representing the answer to `findNode` query. In this case, `contact.transport` will be automatically populated with this transport's host and port.
 
 #### Event: `node`
 
@@ -192,7 +194,7 @@ tcpTransport.on('ping', function (nodeId, sender, callback) {
 });
 ```
 
-In the above example `contact` is an Object representing the answer to `ping` query.
+In the above example `contact` is an Object representing the answer to `ping` query. In this case, `contact.transport` will be automatically populated with this transport's host and port.
 
 If the exact node specified by nodeId does not exist, an error shall be returned as shown below:
 
