@@ -120,21 +120,27 @@ TcpTransport.prototype.listen = function listen (callback) {
             connection.write(JSON.stringify(response) + '\r\n');
             connection.end();
         };
-        connection.on('data', function (data) {
+        var consumeData = function () {
+            var index = data.indexOf('\r\n');
+            if (!~index)
+                return; // wait for more data
+            var chunk = data.slice(0, index);
+            data = data.slice(index + 2);
+
             try {
-                data = JSON.parse(data.toString("utf8"));
+                chunk = JSON.parse(chunk.toString("utf8"));
             } catch (exception) {
                 return connection.end(); // kill connection
             }
-            if (data.request && data.request.findNode) {
-                self.emit('findNode', data.request.findNode, data.sender, function (error, response) {
+            if (chunk.request && chunk.request.findNode) {
+                self.emit('findNode', chunk.request.findNode, chunk.sender, function (error, response) {
                     if (error)
                         return connection.end();
                     if (responseCallback)
                         responseCallback(response);
                 });
-            } else if (data.request && data.request.ping) {
-                self.emit('ping', data.request.ping, data.sender, function (error, response) {
+            } else if (chunk.request && chunk.request.ping) {
+                self.emit('ping', chunk.request.ping, chunk.sender, function (error, response) {
                     if (error)
                         return connection.end();
                     if (responseCallback)
@@ -143,6 +149,13 @@ TcpTransport.prototype.listen = function listen (callback) {
             } else {
                 return connection.end(); // kill connection
             }
+            return true;
+        };
+        var data = "";
+        connection.on('data', function (buf) {
+            data += buf.toString("utf8");
+            console.log('data');
+            while (consumeData());
         });
         connection.on('end', function () {
             responseCallback = undefined;
@@ -199,7 +212,7 @@ TcpTransport.prototype.ping = function ping (contact, sender) {
     * `transport`: _Object_ TCP transport data.
       * `host`: _String_ Host to connect to.
       * `port`: _Integer_ Port to connect to.
-  * `payload`: _String_ or _Object_ Payload to send on the wire. If an _Object_ 
+  * `payload`: _String_ or _Object_ Payload to send on the wire. If an _Object_
       is provided, it will be `JSON.stringify()`'ed.
   * `callback`: _Function_ Callback to call with an error or response.
 */
