@@ -252,7 +252,6 @@ test['findNode() emits `node` event with `JSON parse error: ...` error on JSON p
             test.ok(error instanceof Error)
             test.ok(error.message.match(/^JSON parse error:/));
             test.ok(error.message.match(/ when parsing /));
-            console.log(error.message);
             server.close(function () {
                 test.done();
             });
