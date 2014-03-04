@@ -8,7 +8,7 @@ TCP transport for [Discover](https://github.com/tristanls/discover), a distribut
 
 ## Contributors
 
-[@tristanls](https://github.com/tristanls), [@mikedeboer](https://github.com/mikedeboer)
+[@tristanls](https://github.com/tristanls), [@mikedeboer](https://github.com/mikedeboer), [@skeggse](https://github.com/skeggse)
 
 ## Installation
 
@@ -20,7 +20,7 @@ TCP transport for [Discover](https://github.com/tristanls/discover), a distribut
 
 ## Overview
 
-Discover TCP transport implements the Discover transport protocol consisting of a stripped down version of the Kademlia DHT protocol, PING and FIND-NODE. The TCP transport reports a node as unreachable if a connection cannot be established with it. 
+Discover TCP transport implements the Discover transport protocol consisting of a stripped down version of the Kademlia DHT protocol, PING and FIND-NODE. The TCP transport reports a node as unreachable if a connection cannot be established with it.
 
 _NOTE: Unreachability of nodes depends on the transport. For example, other transports (like TLS transport) could use other criteria (like invalid certificate) for reporting unreachable nodes._
 
@@ -101,7 +101,7 @@ Starts the server to listen to requests from other nodes.
     * `data`: _Any_ Sender node data.
     * `transport`: _Object_ TCP transport data.
       * `host`: _String_ Host of the sender.
-      * `port`: _Integer_ Port of the sender.    
+      * `port`: _Integer_ Port of the sender.
 
 Issues a PING request to the `contact`. In other words, pings the contact at the `contact.transport.host` and `contact.transport.port` using TCP. The transport will emit `unreachable` event if the contact is deemed to be unreachable, or `reached` event otherwise.
 
@@ -167,7 +167,7 @@ var TcpTransport = require('discover-tcp-transport');
 var tcpTransport = new TcpTransport();
 tcpTransport.on('findNode', function (nodeId, sender, callback) {
     // ... this node knows the node with nodeId or is itself node with nodeId
-    return callback(null, nodeWithNodeId); 
+    return callback(null, nodeWithNodeId);
 });
 ```
 
@@ -206,7 +206,7 @@ var TcpTransport = require('discover-tcp-transport');
 var tcpTransport = new TcpTransport();
 tcpTransport.on('ping', function (nodeId, sender, callback) {
     // ... verify that we have the exact node specified by nodeId
-    return callback(null, contact); 
+    return callback(null, contact);
 });
 ```
 
@@ -219,7 +219,7 @@ var TcpTransport = require('discover-tcp-transport');
 var tcpTransport = new TcpTransport();
 tcpTransport.on('ping', function (nodeId, sender, callback) {
     // ...we don't have the nodeId specified
-    return callback(true); 
+    return callback(true);
 });
 ```
 
