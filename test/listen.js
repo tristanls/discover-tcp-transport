@@ -4,7 +4,7 @@ listen.js - listen() test
 
 The MIT License (MIT)
 
-Copyright (c) 2013 Tristan Slominski
+Copyright (c) 2013-2014 Tristan Slominski
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -109,10 +109,55 @@ test['listening transport emits `findNode` event when it receives FIND-NODE requ
     });
 };
 
+test['listening transport emits `findNode` event when it receives a really large FIND-NODE request'] = function (test) {
+    test.expect(6);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var tcpTransport = new TcpTransport();
+    var data = "";
+    for (var i = 0; i < 1e6; i++) {
+        data += "abcdefghijklmnopqrstuvwxyz";
+    }
+    tcpTransport.listen(function () {
+        var client = net.connect({host: 'localhost', port: 6742}, function () {
+            var request = {
+                request: {
+                    findNode: fooBase64
+                },
+                sender: {
+                    id: barBase64,
+                    data: data,
+                    transport: {
+                        host: '127.0.0.1',
+                        port: 11111
+                    }
+                }
+            };
+            client.write(JSON.stringify(request) + '\r\n'); // FIND-NODE request
+        });
+        client.on('error', function (error) {
+            // catch test connection cut
+        });
+    });
+    tcpTransport.on('findNode', function (nodeId, sender, callback) {
+        test.equal(nodeId, fooBase64);
+        test.equal(sender.id, barBase64);
+        test.equal(sender.transport.host, "127.0.0.1");
+        test.equal(sender.transport.port, 11111);
+        test.equal(sender.data, data);
+        test.ok(callback instanceof Function);
+        // call the callback for quick test termination
+        callback();
+        tcpTransport.close(function () {
+            test.done();
+        });
+    });
+};
+
 test['listening transport sends `findNode` event callback as response'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
-    var barBase64 = new Buffer("bar").toString("base64");    
+    var barBase64 = new Buffer("bar").toString("base64");
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
         var client = net.connect({host: 'localhost', port: 6742}, function () {
@@ -123,7 +168,7 @@ test['listening transport sends `findNode` event callback as response'] = functi
                 sender: {
                     id: barBase64,
                     data: 'bar',
-                    transport: {                        
+                    transport: {
                         host: '127.0.0.1',
                         port: 11111
                     }
@@ -152,8 +197,8 @@ test['listening transport sends `findNode` event callback as response'] = functi
 test['listening transport closes connection if `findNode` event callback has error set'] = function (test) {
     test.expect(3);
     var fooBase64 = new Buffer("foo").toString("base64");
-    var barBase64 = new Buffer("bar").toString("base64");  
-    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};    
+    var barBase64 = new Buffer("bar").toString("base64");
+    var barContact = {transport: {host: '127.0.0.1', port: 11111}, id: barBase64, data: "bar"};
     var tcpTransport = new TcpTransport();
     tcpTransport.listen(function () {
         var client = net.connect({host: 'localhost', port: 6742}, function () {
@@ -172,7 +217,7 @@ test['listening transport closes connection if `findNode` event callback has err
             test.ok(true); // assert closed connection
             tcpTransport.close(function () {
                 test.done();
-            });            
+            });
         });
         client.on('error', function (error) {
             // catch test connection cut
@@ -281,12 +326,12 @@ test['listening transport closes connection if `ping` event callback has error s
             test.ok(true); // assert closed connection
             tcpTransport.close(function () {
                 test.done();
-            });            
-        });        
+            });
+        });
         client.on('error', function (error) {
             // catch test connection cut
         });
-    });    
+    });
     tcpTransport.on('ping', function (nodeId, sender, callback) {
         test.equal(nodeId, fooBase64);
         test.ok(callback instanceof Function);

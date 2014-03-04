@@ -122,7 +122,13 @@ TcpTransport.prototype.listen = function listen (callback) {
             connection.write(JSON.stringify(response) + '\r\n');
             connection.end();
         };
-        connection.on('data', function (data) {
+        var data = "";
+        connection.on('data', function (chunk) {
+            data += chunk.toString("utf8");
+            if (!~data.indexOf('\r\n')) {
+                return; // wait for more data
+            }
+
             try {
                 data = JSON.parse(data.toString("utf8"));
             } catch (exception) {
