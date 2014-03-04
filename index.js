@@ -4,7 +4,7 @@ index.js - discover-tcp-transport: TCP transport for Discover node discovery
 
 The MIT License (MIT)
 
-Copyright (c) 2013 Tristan Slominski
+Copyright (c) 2013-2014 Tristan Slominski
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -98,13 +98,15 @@ TcpTransport.prototype.findNode = function findNode (contact, nodeId, sender) {
             return;
         }
         if (!data)
-            return self.emit('node', new Error('error'), contact, nodeId);
+            return self.emit('node', new Error('no data received'), contact, nodeId);
 
         try {
             data = JSON.parse(data.toString());
             return self.emit('node', null, contact, nodeId, data);
         } catch (exception) {
-            self.emit('node', new Error('error'), contact, nodeId);
+            self.emit('node',
+                new Error('JSON parse error: ' + exception.message + ' when parsing ' + data),
+                contact, nodeId);
         }
     });
 };
@@ -199,7 +201,7 @@ TcpTransport.prototype.ping = function ping (contact, sender) {
     * `transport`: _Object_ TCP transport data.
       * `host`: _String_ Host to connect to.
       * `port`: _Integer_ Port to connect to.
-  * `payload`: _String_ or _Object_ Payload to send on the wire. If an _Object_ 
+  * `payload`: _String_ or _Object_ Payload to send on the wire. If an _Object_
       is provided, it will be `JSON.stringify()`'ed.
   * `callback`: _Function_ Callback to call with an error or response.
 */

@@ -51,9 +51,9 @@ test['findNode() connects to contact.transport.host:contact.transport.port'] = f
         var tcpTransport = new TcpTransport();
         tcpTransport.findNode(
             {
-                id: new Buffer("bar").toString("base64"), 
+                id: new Buffer("bar").toString("base64"),
                 transport: {host: '127.0.0.1', port: 11234}
-            }, 
+            },
             new Buffer("foo").toString("base64"),
             {id: new Buffer("foo").toString("base64")});
     });
@@ -65,7 +65,7 @@ test['findNode() sends newline terminated base64 encoded findNode request with o
     var barBase64 = new Buffer("bar").toString("base64");
     var server = net.createServer(function (connection) {
         connection.on('data', function (data) {
-            var data = JSON.parse(data.toString("utf8"));  
+            var data = JSON.parse(data.toString("utf8"));
             test.equal(data.request.findNode, fooBase64);
             test.equal(data.sender.id, barBase64);
             test.equal(data.sender.transport.host, "127.0.0.1");
@@ -111,7 +111,7 @@ test['findNode() emits `node` event with a response Object if node is found'] = 
             });
         });
         tcpTransport.findNode(
-            {id: barBase64, transport: {host: '127.0.0.1', port: 11234}}, 
+            {id: barBase64, transport: {host: '127.0.0.1', port: 11234}},
             fooBase64,
             {id: barBase64});
     });
@@ -150,7 +150,7 @@ test['findNode() emits `node` event with response Array if node is not found'] =
             });
         });
         tcpTransport.findNode(
-            {transport: {host: '127.0.0.1', port: 11234}, id: barBase64}, 
+            {transport: {host: '127.0.0.1', port: 11234}, id: barBase64},
             fooBase64,
             {id: barBase64});
     });
@@ -196,12 +196,12 @@ test['findNode() emits `node` event with `unreachable` error on failed connectio
         test.done();
     });
     tcpTransport.findNode(
-        {transport: {host: '127.0.0.1', port: 11000}, id: barBase64}, 
+        {transport: {host: '127.0.0.1', port: 11000}, id: barBase64},
         fooBase64,
         {id: barBase64});
 };
 
-test['findNode() emits `node` event with `error` error on no-data connection'] = function (test) {
+test['findNode() emits `node` event with `no data received` error on no-data connection'] = function (test) {
     test.expect(7);
     var fooBase64 = new Buffer("foo").toString("base64");
     var barBase64 = new Buffer("bar").toString("base64");
@@ -219,13 +219,46 @@ test['findNode() emits `node` event with `error` error on no-data connection'] =
             test.equal(contact.transport.port, 11234);
             test.equal(nodeId, fooBase64);
             test.ok(error instanceof Error)
-            test.equal(error.message, 'error');
+            test.equal(error.message, 'no data received');
             server.close(function () {
                 test.done();
             });
         });
         tcpTransport.findNode(
-            {transport: {host: '127.0.0.1', port: 11234}, id: barBase64}, 
+            {transport: {host: '127.0.0.1', port: 11234}, id: barBase64},
+            fooBase64,
+            {id: barBase64});
+    });
+};
+
+test['findNode() emits `node` event with `JSON parse error: ...` error on JSON parse failure'] = function (test) {
+    test.expect(8);
+    var fooBase64 = new Buffer("foo").toString("base64");
+    var barBase64 = new Buffer("bar").toString("base64");
+    var server = net.createServer(function (connection) {
+        connection.on('data', function (data) {
+            connection.write("{foo:not formatted correctly\r\n");
+            connection.end();
+        });
+    });
+    server.listen(11234, function () {
+        var tcpTransport = new TcpTransport();
+        tcpTransport.on('node', function (error, contact, nodeId, response) {
+            test.ok(!response);
+            test.equal(contact.id, barBase64);
+            test.equal(contact.transport.host, '127.0.0.1');
+            test.equal(contact.transport.port, 11234);
+            test.equal(nodeId, fooBase64);
+            test.ok(error instanceof Error)
+            test.ok(error.message.match(/^JSON parse error:/));
+            test.ok(error.message.match(/ when parsing /));
+            console.log(error.message);
+            server.close(function () {
+                test.done();
+            });
+        });
+        tcpTransport.findNode(
+            {transport: {host: '127.0.0.1', port: 11234}, id: barBase64},
             fooBase64,
             {id: barBase64});
     });
@@ -243,6 +276,6 @@ test['findNode() emits `unreachable` event on failed connection'] = function (te
         test.done();
     });
     tcpTransport.findNode(
-        {transport: {host: '127.0.0.1', port: 11000}, id: barBase64}, 
+        {transport: {host: '127.0.0.1', port: 11000}, id: barBase64},
         fooBase64);
 };
